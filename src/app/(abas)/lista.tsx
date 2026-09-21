@@ -1,24 +1,122 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Cores, Fonte } from '@/constants/tema';
+import { BarraSuperior } from '@/componentes/barra-superior';
+import { Cartaz, LarguraCartaz } from '@/componentes/cartaz';
+import { AlturaBarraAbas, Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
+import { useMinhaLista } from '@/contextos/minha-lista';
+
+const COLUNAS = 3;
 
 export default function TelaLista() {
+  const { animesSalvos, remover } = useMinhaLista();
+  const router = useRouter();
+
+  /** Confirma antes de remover, por ser uma acao destrutiva. */
+  const confirmarRemocao = (id: number, titulo: string) => {
+    Alert.alert('Remover da lista', `Deseja tirar ${titulo} da sua lista?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Remover', style: 'destructive', onPress: () => remover(id) },
+    ]);
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.texto}>Minha lista</Text>
+      <BarraSuperior />
+
+      <FlatList
+        data={animesSalvos}
+        keyExtractor={(anime) => String(anime.id)}
+        numColumns={COLUNAS}
+        columnWrapperStyle={animesSalvos.length > 0 ? styles.coluna : undefined}
+        contentContainerStyle={[
+          styles.conteudo,
+          animesSalvos.length === 0 && styles.conteudoVazio,
+        ]}
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item }) => (
+          <Pressable
+            onLongPress={() => confirmarRemocao(item.id, item.titulo)}
+            delayLongPress={350}>
+            <Cartaz anime={item} largura={LarguraCartaz.grade} />
+          </Pressable>
+        )}
+        ListHeaderComponent={
+          animesSalvos.length > 0 ? (
+            <View style={styles.cabecalho}>
+              <Text style={styles.titulo}>Minha lista</Text>
+              <Text style={styles.subtitulo}>
+                {animesSalvos.length === 1
+                  ? '1 titulo salvo'
+                  : `${animesSalvos.length} titulos salvos`}
+                {' · '}segure para remover
+              </Text>
+            </View>
+          ) : null
+        }
+        ListEmptyComponent={
+          <View style={styles.vazio}>
+            <Ionicons name="bookmark-outline" size={52} color={Cores.textoTerciario} />
+            <Text style={styles.vazioTitulo}>Sua lista esta vazia</Text>
+            <Text style={styles.vazioTexto}>
+              Salve os titulos que quiser assistir depois e eles aparecem aqui.
+            </Text>
+            <Pressable
+              style={({ pressed }) => [styles.botao, pressed && styles.pressionado]}
+              onPress={() => router.push('/busca')}>
+              <Text style={styles.textoBotao}>Explorar catalogo</Text>
+            </Pressable>
+          </View>
+        }
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Cores.fundo,
+  container: { flex: 1, backgroundColor: Cores.fundo },
+  conteudo: {
+    paddingHorizontal: Espacamento.lg,
+    paddingBottom: AlturaBarraAbas + Espacamento.xl,
   },
-  texto: {
-    color: Cores.textoSecundario,
+  conteudoVazio: { flexGrow: 1, justifyContent: 'center' },
+  coluna: { justifyContent: 'space-between', marginBottom: Espacamento.lg },
+  cabecalho: { marginBottom: Espacamento.lg },
+  titulo: {
+    color: Cores.texto,
+    fontSize: Fonte.destaque,
+    fontWeight: '800',
+  },
+  subtitulo: {
+    color: Cores.textoTerciario,
+    fontSize: Fonte.minuscula,
+    marginTop: 2,
+  },
+  vazio: { alignItems: 'center', gap: Espacamento.sm, paddingHorizontal: Espacamento.xl },
+  vazioTitulo: {
+    color: Cores.texto,
     fontSize: Fonte.titulo,
+    fontWeight: '700',
+    marginTop: Espacamento.sm,
+  },
+  vazioTexto: {
+    color: Cores.textoSecundario,
+    fontSize: Fonte.pequena,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  botao: {
+    backgroundColor: Cores.marca,
+    paddingVertical: Espacamento.md,
+    paddingHorizontal: Espacamento.xl,
+    borderRadius: Raio.sm,
+    marginTop: Espacamento.lg,
+  },
+  pressionado: { opacity: 0.7 },
+  textoBotao: {
+    color: Cores.texto,
+    fontSize: Fonte.corpo,
+    fontWeight: '700',
   },
 });
