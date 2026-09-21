@@ -1,11 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  FlatList,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Cartaz, LarguraCartaz } from '@/componentes/cartaz';
 import { AlturaBarraAbas, Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
 import { animes } from '@/dados/animes';
+import { generosDisponiveis } from '@/dados/colecoes';
 
 const COLUNAS = 3;
 
@@ -90,13 +99,22 @@ export default function TelaBusca() {
           }
         />
       ) : (
-        <View style={styles.vazio}>
-          <Ionicons name="search-outline" size={44} color={Cores.textoTerciario} />
-          <Text style={styles.vazioTitulo}>O que voce quer assistir?</Text>
-          <Text style={styles.vazioTexto}>
-            Digite o nome de um anime, de um estudio ou de um genero.
-          </Text>
-        </View>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.exploracao}
+          keyboardShouldPersistTaps="handled">
+          <Text style={styles.tituloExploracao}>Explorar por genero</Text>
+          <View style={styles.etiquetas}>
+            {generosDisponiveis.map((genero) => (
+              <Pressable
+                key={genero}
+                onPress={() => setTermo(genero)}
+                style={({ pressed }) => [styles.etiqueta, pressed && styles.etiquetaPressionada]}>
+                <Text style={styles.textoEtiqueta}>{genero}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </ScrollView>
       )}
     </View>
   );
@@ -131,6 +149,36 @@ const styles = StyleSheet.create({
     paddingBottom: AlturaBarraAbas + Espacamento.xl,
   },
   coluna: { justifyContent: 'space-between', marginBottom: Espacamento.lg },
+  exploracao: {
+    paddingHorizontal: Espacamento.lg,
+    paddingTop: Espacamento.xl,
+    paddingBottom: AlturaBarraAbas + Espacamento.xl,
+  },
+  tituloExploracao: {
+    color: Cores.texto,
+    fontSize: Fonte.titulo,
+    fontWeight: '700',
+    marginBottom: Espacamento.lg,
+  },
+  etiquetas: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Espacamento.sm,
+  },
+  etiqueta: {
+    backgroundColor: Cores.superficie,
+    borderWidth: 1,
+    borderColor: Cores.divisoria,
+    paddingVertical: Espacamento.md,
+    paddingHorizontal: Espacamento.lg,
+    borderRadius: Raio.pilula,
+  },
+  etiquetaPressionada: { backgroundColor: Cores.superficieAlta },
+  textoEtiqueta: {
+    color: Cores.texto,
+    fontSize: Fonte.pequena,
+    fontWeight: '600',
+  },
   vazio: {
     flex: 1,
     alignItems: 'center',
