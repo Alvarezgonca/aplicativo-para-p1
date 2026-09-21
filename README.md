@@ -1,56 +1,52 @@
-# Welcome to your Expo app 👋
+# Crunchyroll — reprodução de interface
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicativo híbrido que reproduz a interface do Crunchyroll em React Native com
+Expo. Todo o conteúdo é estático: o aplicativo não consulta nenhum serviço
+externo em tempo de execução.
 
-## Get started
+Trabalho da disciplina de Aplicativos Híbridos.
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Como executar
 
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Abra o projeto no aplicativo **Expo Go**, lendo o QR code ou selecionando o
+servidor na mesma rede. Em redes que isolam os dispositivos entre si, use
+`npx expo start --tunnel`.
 
-### Other setup steps
+## Telas
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+| Rota | Tela |
+| --- | --- |
+| `(abas)/index` | Início, com banner rotativo, continuidade e coleções |
+| `(abas)/busca` | Busca com filtro em tempo real e exploração por gênero |
+| `(abas)/simulcast` | Calendário semanal de lançamentos |
+| `(abas)/lista` | Títulos salvos, em grade |
+| `(abas)/perfil` | Perfil, estatísticas e preferências |
+| `anime/[id]` | Detalhe do título, com abas de episódios e informações |
+| `player/[episodioId]` | Reprodução |
 
-## Learn more
+## Organização
 
-To learn more about developing your project with Expo, look at the following resources:
+```
+src/
+  app/          rotas (a estrutura de arquivos define a navegação)
+  componentes/  componentes reutilizáveis
+  constants/    paleta, espaçamentos e tipografia
+  contextos/    estado compartilhado entre telas
+  dados/        catálogo, episódios, coleções e grade de simulcast
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Verificações
 
-## Join the community
+```bash
+npx tsc --noEmit   # tipos
+npx eslint .       # análise estática
+```
 
-Join our community of developers creating universal apps.
+## Autores
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Daniel Alvarez Gonçalves e Clara Moledo.
