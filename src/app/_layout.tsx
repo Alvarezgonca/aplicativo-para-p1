@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { initialWindowMetrics, SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { Cores } from '@/constants/tema';
 import { ProvedorMinhaLista } from '@/contextos/minha-lista';
@@ -11,10 +11,16 @@ import { ProvedorMinhaLista } from '@/contextos/minha-lista';
  * Declara uma pilha de navegacao com o grupo de abas na base. As telas de
  * detalhe e de reproducao ficam fora do grupo e sao empilhadas por cima da
  * barra de abas, como acontece no aplicativo original.
+ *
+ * O provedor de area segura recebe initialWindowMetrics. Sem esse valor ele
+ * inicia com as margens indefinidas e nao renderiza os filhos ate o sistema
+ * responder qual e a area util da tela, o que adia a primeira renderizacao do
+ * aplicativo inteiro. As metricas iniciais vem das constantes nativas de forma
+ * sincrona, entao a arvore e montada ja na primeira passagem.
  */
 export default function LayoutRaiz() {
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <ProvedorMinhaLista>
         <StatusBar style="light" />
         <Stack
