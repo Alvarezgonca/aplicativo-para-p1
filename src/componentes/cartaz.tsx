@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { BarraProgresso } from '@/componentes/barra-progresso';
 import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
 import type { Anime } from '@/dados/animes';
 
@@ -15,8 +16,12 @@ export const LarguraCartaz = { carrossel: 124 } as const;
 interface Props {
   anime: Anime;
   largura?: number;
-  /** Exibe titulo, nota e selo de dublagem abaixo da imagem. */
+  /** Exibe a legenda abaixo da imagem. */
   mostrarLegenda?: boolean;
+  /** Exibe a nota na legenda. Desligado nas grades, onde polui em largura pequena. */
+  mostrarNota?: boolean;
+  /** Fracao ja assistida da serie. Quando informada, desenha a barra na base. */
+  progresso?: number;
 }
 
 /**
@@ -26,7 +31,13 @@ interface Props {
  * O componente e um link para a rota de detalhe; a navegacao fica a cargo do
  * Expo Router, sem que a tela de origem precise saber para onde ir.
  */
-export function Cartaz({ anime, largura = LarguraCartaz.carrossel, mostrarLegenda = true }: Props) {
+export function Cartaz({
+  anime,
+  largura = LarguraCartaz.carrossel,
+  mostrarLegenda = true,
+  mostrarNota = true,
+  progresso,
+}: Props) {
   return (
     <Link href={{ pathname: '/anime/[id]', params: { id: anime.id } }} asChild>
       <Pressable style={({ pressed }) => [{ width: largura }, pressed && styles.pressionado]}>
@@ -42,17 +53,27 @@ export function Cartaz({ anime, largura = LarguraCartaz.carrossel, mostrarLegend
               <Text style={styles.textoDublado}>DUB</Text>
             </View>
           ) : null}
+
+          {progresso !== undefined && progresso > 0 ? (
+            <View style={styles.progresso}>
+              <BarraProgresso progresso={progresso} />
+            </View>
+          ) : null}
         </View>
 
         {mostrarLegenda ? (
           <View style={styles.legenda}>
+            {/* A altura minima reserva sempre duas linhas: sem isso, cartazes
+                de titulo curto ficam mais baixos e a base da grade serrilha. */}
             <Text style={styles.titulo} numberOfLines={2}>
               {anime.titulo}
             </Text>
-            <View style={styles.linhaNota}>
-              <Ionicons name="star" size={11} color={Cores.dourado} />
-              <Text style={styles.nota}>{anime.nota.toFixed(1)}</Text>
-            </View>
+            {mostrarNota ? (
+              <View style={styles.linhaNota}>
+                <Ionicons name="star" size={11} color={Cores.dourado} />
+                <Text style={styles.nota}>{anime.nota.toFixed(1)}</Text>
+              </View>
+            ) : null}
           </View>
         ) : null}
       </Pressable>
@@ -69,6 +90,7 @@ const styles = StyleSheet.create({
     backgroundColor: Cores.superficie,
   },
   imagem: { width: '100%', height: '100%' },
+  progresso: { position: 'absolute', bottom: 0, left: 0, right: 0 },
   etiquetaDublado: {
     position: 'absolute',
     top: Espacamento.xs,
@@ -90,6 +112,7 @@ const styles = StyleSheet.create({
     fontSize: Fonte.pequena,
     fontWeight: '600',
     lineHeight: 17,
+    minHeight: 34,
   },
   linhaNota: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   nota: {

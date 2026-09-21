@@ -8,6 +8,7 @@ import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
 import { useAlturaBarraAbas } from '@/hooks/use-altura-barra-abas';
 import { useLarguraGrade } from '@/hooks/use-largura-grade';
 import { useMinhaLista } from '@/contextos/minha-lista';
+import { progressoDaSerie } from '@/dados/episodios';
 
 const COLUNAS = 3;
 
@@ -44,19 +45,29 @@ export default function TelaLista() {
           <Pressable
             onLongPress={() => confirmarRemocao(item.id, item.titulo)}
             delayLongPress={350}>
-            <Cartaz anime={item} largura={larguraCartaz} />
+            <Cartaz
+              anime={item}
+              largura={larguraCartaz}
+              mostrarNota={false}
+              progresso={progressoDaSerie(item)}
+            />
           </Pressable>
         )}
         ListHeaderComponent={
           animesSalvos.length > 0 ? (
             <View style={styles.cabecalho}>
               <Text style={styles.titulo}>Minha lista</Text>
-              <Text style={styles.subtitulo}>
-                {animesSalvos.length === 1
-                  ? '1 titulo salvo'
-                  : `${animesSalvos.length} titulos salvos`}
-                {' · '}segure para remover
-              </Text>
+              <View style={styles.linhaResumo}>
+                <Text style={styles.subtitulo}>
+                  {animesSalvos.length === 1
+                    ? '1 titulo salvo'
+                    : `${animesSalvos.length} titulos salvos`}
+                </Text>
+                <View style={styles.dica}>
+                  <Ionicons name="hand-left-outline" size={12} color={Cores.textoTerciario} />
+                  <Text style={styles.textoDica}>segure para remover</Text>
+                </View>
+              </View>
             </View>
           ) : null
         }
@@ -90,11 +101,19 @@ const styles = StyleSheet.create({
     fontSize: Fonte.destaque,
     fontWeight: '800',
   },
-  subtitulo: {
-    color: Cores.textoTerciario,
-    fontSize: Fonte.minuscula,
-    marginTop: 2,
+  linhaResumo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: Espacamento.xs,
   },
+  subtitulo: {
+    color: Cores.textoSecundario,
+    fontSize: Fonte.minuscula,
+    fontWeight: '600',
+  },
+  dica: { flexDirection: 'row', alignItems: 'center', gap: Espacamento.xs },
+  textoDica: { color: Cores.textoTerciario, fontSize: Fonte.minuscula },
   vazio: { alignItems: 'center', gap: Espacamento.sm, paddingHorizontal: Espacamento.xl },
   vazioTitulo: {
     color: Cores.texto,

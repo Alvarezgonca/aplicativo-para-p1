@@ -58,6 +58,19 @@ export function listarEpisodios(animeId: number): Episodio[] {
   });
 }
 
+/**
+ * Fracao da serie ja concluida, de 0 a 1. Usada pela barra de progresso dos
+ * cartazes na grade da lista salva.
+ */
+export function progressoDaSerie(anime: Anime): number {
+  const episodios = listarEpisodios(anime.id);
+  if (episodios.length === 0) {
+    return 0;
+  }
+  const concluidos = episodios.filter((episodio) => episodio.progresso >= 1).length;
+  return concluidos / episodios.length;
+}
+
 /** Primeiro episodio ainda nao concluido, usado pelo botao de continuar. */
 export function proximoEpisodio(anime: Anime): Episodio | undefined {
   return listarEpisodios(anime.id).find((episodio) => episodio.progresso < 1);
