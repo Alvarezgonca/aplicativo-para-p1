@@ -4,13 +4,15 @@ import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native
 
 import { BarraSuperior } from '@/componentes/barra-superior';
 import { Cartaz, LarguraCartaz } from '@/componentes/cartaz';
-import { AlturaBarraAbas, Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
+import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
+import { useAlturaBarraAbas } from '@/hooks/use-altura-barra-abas';
 import { useMinhaLista } from '@/contextos/minha-lista';
 
 const COLUNAS = 3;
 
 export default function TelaLista() {
   const { animesSalvos, remover } = useMinhaLista();
+  const alturaAbas = useAlturaBarraAbas();
   const router = useRouter();
 
   /** Confirma antes de remover, por ser uma acao destrutiva. */
@@ -32,6 +34,7 @@ export default function TelaLista() {
         columnWrapperStyle={animesSalvos.length > 0 ? styles.coluna : undefined}
         contentContainerStyle={[
           styles.conteudo,
+          { paddingBottom: alturaAbas + Espacamento.xl },
           animesSalvos.length === 0 && styles.conteudoVazio,
         ]}
         showsVerticalScrollIndicator={false}
@@ -76,10 +79,7 @@ export default function TelaLista() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Cores.fundo },
-  conteudo: {
-    paddingHorizontal: Espacamento.lg,
-    paddingBottom: AlturaBarraAbas + Espacamento.xl,
-  },
+  conteudo: { paddingHorizontal: Espacamento.lg },
   conteudoVazio: { flexGrow: 1, justifyContent: 'center' },
   coluna: { justifyContent: 'space-between', marginBottom: Espacamento.lg },
   cabecalho: { marginBottom: Espacamento.lg },

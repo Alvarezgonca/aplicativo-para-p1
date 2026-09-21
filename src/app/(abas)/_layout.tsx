@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router/js-tabs';
 
-import { Cores, Fonte } from '@/constants/tema';
+import { AlturaBarraAbas, Cores, Fonte } from '@/constants/tema';
+import { useAlturaBarraAbas } from '@/hooks/use-altura-barra-abas';
 
 type NomeIcone = keyof typeof Ionicons.glyphMap;
 
@@ -15,6 +16,9 @@ const abas: { nome: string; rotulo: string; icone: NomeIcone }[] = [
 ];
 
 export default function LayoutAbas() {
+  const alturaBarra = useAlturaBarraAbas();
+  const recuoInferior = alturaBarra - AlturaBarraAbas;
+
   return (
     <Tabs
       screenOptions={{
@@ -25,9 +29,11 @@ export default function LayoutAbas() {
           backgroundColor: Cores.superficie,
           borderTopColor: Cores.divisoria,
           borderTopWidth: 1,
-          height: 64,
+          // A altura soma o recuo do sistema para que os icones nao fiquem
+          // sob a barra de navegacao do aparelho.
+          height: alturaBarra,
           paddingTop: 6,
-          paddingBottom: 8,
+          paddingBottom: recuoInferior + 8,
         },
         tabBarLabelStyle: {
           fontSize: Fonte.minuscula,

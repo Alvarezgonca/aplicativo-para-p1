@@ -4,7 +4,8 @@ import { BarraSuperior } from '@/componentes/barra-superior';
 import { Carrossel } from '@/componentes/carrossel';
 import { CartaoContinuar } from '@/componentes/cartao-continuar';
 import { Destaque } from '@/componentes/destaque';
-import { AlturaBarraAbas, Cores, Espacamento, Fonte } from '@/constants/tema';
+import { Cores, Espacamento, Fonte } from '@/constants/tema';
+import { useAlturaBarraAbas } from '@/hooks/use-altura-barra-abas';
 import { animes } from '@/dados/animes';
 import { colecoes } from '@/dados/colecoes';
 import { proximoEpisodio } from '@/dados/episodios';
@@ -20,11 +21,13 @@ const emAndamento = animes.filter((anime) => anime.destaque).flatMap((anime) => 
 });
 
 export default function TelaInicio() {
+  const alturaAbas = useAlturaBarraAbas();
+
   return (
     <View style={styles.container}>
       <BarraSuperior sobreposta />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.conteudo}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: alturaAbas + Espacamento.xl }}>
         <Destaque />
 
         <View style={styles.secaoContinuar}>
@@ -52,7 +55,6 @@ export default function TelaInicio() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Cores.fundo },
-  conteudo: { paddingBottom: AlturaBarraAbas + Espacamento.xl },
   secaoContinuar: { marginTop: Espacamento.lg },
   tituloSecao: {
     color: Cores.texto,

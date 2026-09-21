@@ -53,7 +53,7 @@ export default function TelaDetalhe() {
           </View>
         )}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.conteudo}
+        contentContainerStyle={{ paddingBottom: recuo.bottom + Espacamento.xxl }}
         ItemSeparatorComponent={() => <View style={styles.separador} />}
         ListHeaderComponent={
       <>
@@ -186,7 +186,6 @@ export default function TelaDetalhe() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Cores.fundo },
-  conteudo: { paddingBottom: Espacamento.xxl },
   listaEpisodios: { paddingHorizontal: Espacamento.lg },
   naoEncontrado: {
     flex: 1,

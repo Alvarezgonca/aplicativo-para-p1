@@ -4,7 +4,8 @@ import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-nat
 
 import { BarraSuperior } from '@/componentes/barra-superior';
 import { Selo } from '@/componentes/selo';
-import { AlturaBarraAbas, Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
+import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
+import { useAlturaBarraAbas } from '@/hooks/use-altura-barra-abas';
 import { useMinhaLista } from '@/contextos/minha-lista';
 import { animes } from '@/dados/animes';
 import { listarEpisodios } from '@/dados/episodios';
@@ -21,6 +22,7 @@ const opcoes: { icone: NomeIcone; rotulo: string; detalhe: string }[] = [
 
 export default function TelaPerfil() {
   const { salvos } = useMinhaLista();
+  const alturaAbas = useAlturaBarraAbas();
   const [notificacoes, setNotificacoes] = useState(true);
   const [apenasDublados, setApenasDublados] = useState(false);
 
@@ -46,7 +48,7 @@ export default function TelaPerfil() {
     <View style={styles.container}>
       <BarraSuperior />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.conteudo}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.conteudo, { paddingBottom: alturaAbas + Espacamento.xl }]}>
         <View style={styles.identificacao}>
           <View style={styles.avatar}>
             <Text style={styles.iniciais}>DC</Text>
@@ -125,10 +127,7 @@ export default function TelaPerfil() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Cores.fundo },
-  conteudo: {
-    paddingHorizontal: Espacamento.lg,
-    paddingBottom: AlturaBarraAbas + Espacamento.xl,
-  },
+  conteudo: { paddingHorizontal: Espacamento.lg },
   identificacao: { flexDirection: 'row', alignItems: 'center', gap: Espacamento.lg },
   avatar: {
     width: 64,

@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BarraProgresso } from '@/componentes/barra-progresso';
 import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
@@ -21,6 +22,7 @@ function formatarTempo(minutosTotais: number, fracao: number): string {
 export default function TelaPlayer() {
   const { episodioId } = useLocalSearchParams<{ episodioId: string }>();
   const router = useRouter();
+  const recuo = useSafeAreaInsets();
 
   // O identificador do episodio tem o formato "animeId-numero".
   const [animeId] = String(episodioId).split('-').map(Number);
@@ -73,7 +75,10 @@ export default function TelaPlayer() {
         <LinearGradient
           colors={['rgba(0,0,0,0.75)', 'rgba(0,0,0,0.25)', 'rgba(0,0,0,0.85)']}
           locations={[0, 0.5, 1]}
-          style={styles.camada}>
+          style={[
+            styles.camada,
+            { paddingTop: recuo.top + Espacamento.md, paddingBottom: recuo.bottom + Espacamento.lg },
+          ]}>
           <View style={styles.topo}>
             <Pressable onPress={() => router.back()} hitSlop={10}>
               <Ionicons name="chevron-down" size={26} color={Cores.texto} />
@@ -160,7 +165,6 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     justifyContent: 'space-between',
-    paddingVertical: Espacamento.xl,
   },
   topo: {
     flexDirection: 'row',

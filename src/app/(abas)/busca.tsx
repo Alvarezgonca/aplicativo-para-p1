@@ -12,7 +12,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Cartaz, LarguraCartaz } from '@/componentes/cartaz';
-import { AlturaBarraAbas, Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
+import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
+import { useAlturaBarraAbas } from '@/hooks/use-altura-barra-abas';
 import { animes } from '@/dados/animes';
 import { generosDisponiveis } from '@/dados/colecoes';
 
@@ -32,6 +33,7 @@ function normalizar(texto: string): string {
 
 export default function TelaBusca() {
   const [termo, setTermo] = useState('');
+  const alturaAbas = useAlturaBarraAbas();
   const recuo = useSafeAreaInsets();
 
   /**
@@ -78,7 +80,7 @@ export default function TelaBusca() {
           renderItem={({ item }) => <Cartaz anime={item} largura={LarguraCartaz.grade} />}
           numColumns={COLUNAS}
           columnWrapperStyle={styles.coluna}
-          contentContainerStyle={styles.grade}
+          contentContainerStyle={[styles.grade, { paddingBottom: alturaAbas + Espacamento.xl }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
@@ -101,7 +103,7 @@ export default function TelaBusca() {
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.exploracao}
+          contentContainerStyle={[styles.exploracao, { paddingBottom: alturaAbas + Espacamento.xl }]}
           keyboardShouldPersistTaps="handled">
           <Text style={styles.tituloExploracao}>Explorar por genero</Text>
           <View style={styles.etiquetas}>
@@ -146,13 +148,11 @@ const styles = StyleSheet.create({
   grade: {
     paddingHorizontal: Espacamento.lg,
     paddingTop: Espacamento.lg,
-    paddingBottom: AlturaBarraAbas + Espacamento.xl,
   },
   coluna: { justifyContent: 'space-between', marginBottom: Espacamento.lg },
   exploracao: {
     paddingHorizontal: Espacamento.lg,
     paddingTop: Espacamento.xl,
-    paddingBottom: AlturaBarraAbas + Espacamento.xl,
   },
   tituloExploracao: {
     color: Cores.texto,

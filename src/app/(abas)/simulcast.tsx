@@ -5,7 +5,8 @@ import { Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
 
 import { BarraSuperior } from '@/componentes/barra-superior';
 import { Selo } from '@/componentes/selo';
-import { AlturaBarraAbas, Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
+import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
+import { useAlturaBarraAbas } from '@/hooks/use-altura-barra-abas';
 import { animeDoLancamento, gradeSimulcast, type LancamentoSimulcast } from '@/dados/simulcast';
 
 /**
@@ -52,6 +53,8 @@ function Lancamento({ lancamento }: { lancamento: LancamentoSimulcast }) {
 }
 
 export default function TelaSimulcast() {
+  const alturaAbas = useAlturaBarraAbas();
+
   return (
     <View style={styles.container}>
       <BarraSuperior />
@@ -70,7 +73,7 @@ export default function TelaSimulcast() {
         )}
         // Mantem o cabecalho do dia colado no topo enquanto a secao rola.
         stickySectionHeadersEnabled
-        contentContainerStyle={styles.conteudo}
+        contentContainerStyle={{ paddingBottom: alturaAbas + Espacamento.xl }}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <Text style={styles.intro}>
@@ -84,7 +87,6 @@ export default function TelaSimulcast() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Cores.fundo },
-  conteudo: { paddingBottom: AlturaBarraAbas + Espacamento.xl },
   intro: {
     color: Cores.textoSecundario,
     fontSize: Fonte.pequena,
