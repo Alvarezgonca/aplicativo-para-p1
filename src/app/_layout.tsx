@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { Cores } from '@/constants/tema';
+import { ProvedorMinhaLista } from '@/contextos/minha-lista';
 
 /**
  * Layout raiz da aplicacao.
@@ -14,16 +15,18 @@ import { Cores } from '@/constants/tema';
 export default function LayoutRaiz() {
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: Cores.fundo },
-        }}>
-        <Stack.Screen name="(abas)" />
-        <Stack.Screen name="anime/[id]" />
-        <Stack.Screen name="player/[episodioId]" options={{ animation: 'fade' }} />
-      </Stack>
+      <ProvedorMinhaLista>
+        <StatusBar style="light" />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: Cores.fundo },
+          }}>
+          <Stack.Screen name="(abas)" />
+          <Stack.Screen name="anime/[id]" />
+          <Stack.Screen name="player/[episodioId]" options={{ animation: 'fade' }} />
+        </Stack>
+      </ProvedorMinhaLista>
     </SafeAreaProvider>
   );
 }
