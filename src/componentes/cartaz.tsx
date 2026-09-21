@@ -6,11 +6,11 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
 import type { Anime } from '@/dados/animes';
 
-/** Larguras disponiveis para o cartaz, conforme o contexto de uso. */
-export const LarguraCartaz = {
-  carrossel: 124,
-  grade: 108,
-} as const;
+/**
+ * Largura padrao do cartaz nos carrosseis. Nas grades a largura e calculada a
+ * partir da largura da janela pelo hook useLarguraGrade.
+ */
+export const LarguraCartaz = { carrossel: 124 } as const;
 
 interface Props {
   anime: Anime;

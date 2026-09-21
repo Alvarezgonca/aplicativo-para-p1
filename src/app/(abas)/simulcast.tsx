@@ -30,7 +30,7 @@ function Lancamento({ lancamento }: { lancamento: LancamentoSimulcast }) {
         <Image source={anime.capa} style={styles.capa} contentFit="cover" transition={200} />
 
         <View style={styles.informacoes}>
-          <Text style={styles.titulo} numberOfLines={2}>
+          <Text style={styles.tituloAnime} numberOfLines={2}>
             {anime.titulo}
           </Text>
           <Text style={styles.episodio}>
@@ -63,6 +63,7 @@ export default function TelaSimulcast() {
         sections={secoes}
         keyExtractor={(item) => `${item.animeId}-${item.episodio}`}
         renderItem={({ item }) => <Lancamento lancamento={item} />}
+        ItemSeparatorComponent={() => <View style={styles.separador} />}
         renderSectionHeader={({ section }) => (
           <View style={styles.cabecalhoSecao}>
             <Text style={styles.textoSecao}>{section.title}</Text>
@@ -76,9 +77,12 @@ export default function TelaSimulcast() {
         contentContainerStyle={{ paddingBottom: alturaAbas + Espacamento.xl }}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
-          <Text style={styles.intro}>
-            Episodios novos liberados no mesmo dia da exibicao no Japao.
-          </Text>
+          <View style={styles.cabecalho}>
+            <Text style={styles.titulo}>Simulcast</Text>
+            <Text style={styles.subtitulo}>
+              Episodios novos liberados no mesmo dia da exibicao no Japao.
+            </Text>
+          </View>
         }
       />
     </View>
@@ -87,12 +91,21 @@ export default function TelaSimulcast() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Cores.fundo },
-  intro: {
+  cabecalho: {
+    paddingHorizontal: Espacamento.lg,
+    paddingTop: Espacamento.sm,
+    paddingBottom: Espacamento.lg,
+  },
+  titulo: {
+    color: Cores.texto,
+    fontSize: Fonte.destaque,
+    fontWeight: '800',
+  },
+  subtitulo: {
     color: Cores.textoSecundario,
     fontSize: Fonte.pequena,
-    paddingHorizontal: Espacamento.lg,
-    paddingBottom: Espacamento.lg,
     lineHeight: 19,
+    marginTop: Espacamento.xs,
   },
   cabecalhoSecao: {
     flexDirection: 'row',
@@ -116,22 +129,28 @@ const styles = StyleSheet.create({
   linha: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Espacamento.md,
+    gap: Espacamento.lg,
     paddingHorizontal: Espacamento.lg,
-    paddingVertical: Espacamento.md,
+    paddingVertical: Espacamento.lg,
   },
   pressionada: { backgroundColor: Cores.superficie },
+  separador: {
+    height: 1,
+    backgroundColor: Cores.divisoria,
+    marginLeft: Espacamento.lg + 68 + Espacamento.lg,
+  },
   capa: {
-    width: 56,
-    height: 80,
-    borderRadius: Raio.sm,
+    width: 68,
+    height: 98,
+    borderRadius: Raio.md,
     backgroundColor: Cores.superficie,
   },
   informacoes: { flex: 1, gap: 3 },
-  titulo: {
+  tituloAnime: {
     color: Cores.texto,
     fontSize: Fonte.corpo,
-    fontWeight: '600',
+    fontWeight: '700',
+    lineHeight: 20,
   },
   episodio: {
     color: Cores.textoSecundario,

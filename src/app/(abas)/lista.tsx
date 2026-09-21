@@ -3,9 +3,10 @@ import { useRouter } from 'expo-router';
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { BarraSuperior } from '@/componentes/barra-superior';
-import { Cartaz, LarguraCartaz } from '@/componentes/cartaz';
+import { Cartaz } from '@/componentes/cartaz';
 import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
 import { useAlturaBarraAbas } from '@/hooks/use-altura-barra-abas';
+import { useLarguraGrade } from '@/hooks/use-largura-grade';
 import { useMinhaLista } from '@/contextos/minha-lista';
 
 const COLUNAS = 3;
@@ -13,6 +14,7 @@ const COLUNAS = 3;
 export default function TelaLista() {
   const { animesSalvos, remover } = useMinhaLista();
   const alturaAbas = useAlturaBarraAbas();
+  const larguraCartaz = useLarguraGrade(COLUNAS);
   const router = useRouter();
 
   /** Confirma antes de remover, por ser uma acao destrutiva. */
@@ -42,7 +44,7 @@ export default function TelaLista() {
           <Pressable
             onLongPress={() => confirmarRemocao(item.id, item.titulo)}
             delayLongPress={350}>
-            <Cartaz anime={item} largura={LarguraCartaz.grade} />
+            <Cartaz anime={item} largura={larguraCartaz} />
           </Pressable>
         )}
         ListHeaderComponent={
@@ -79,10 +81,10 @@ export default function TelaLista() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Cores.fundo },
-  conteudo: { paddingHorizontal: Espacamento.lg },
+  conteudo: { paddingHorizontal: Espacamento.lg, paddingTop: Espacamento.sm },
   conteudoVazio: { flexGrow: 1, justifyContent: 'center' },
-  coluna: { justifyContent: 'space-between', marginBottom: Espacamento.lg },
-  cabecalho: { marginBottom: Espacamento.lg },
+  coluna: { gap: Espacamento.md, marginBottom: Espacamento.xl },
+  cabecalho: { marginBottom: Espacamento.xl },
   titulo: {
     color: Cores.texto,
     fontSize: Fonte.destaque,

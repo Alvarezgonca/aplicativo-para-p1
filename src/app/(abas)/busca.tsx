@@ -11,9 +11,10 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Cartaz, LarguraCartaz } from '@/componentes/cartaz';
+import { Cartaz } from '@/componentes/cartaz';
 import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
 import { useAlturaBarraAbas } from '@/hooks/use-altura-barra-abas';
+import { useLarguraGrade } from '@/hooks/use-largura-grade';
 import { animes } from '@/dados/animes';
 import { generosDisponiveis } from '@/dados/colecoes';
 
@@ -34,6 +35,7 @@ function normalizar(texto: string): string {
 export default function TelaBusca() {
   const [termo, setTermo] = useState('');
   const alturaAbas = useAlturaBarraAbas();
+  const larguraCartaz = useLarguraGrade(COLUNAS);
   const recuo = useSafeAreaInsets();
 
   /**
@@ -77,7 +79,7 @@ export default function TelaBusca() {
         <FlatList
           data={resultados}
           keyExtractor={(anime) => String(anime.id)}
-          renderItem={({ item }) => <Cartaz anime={item} largura={LarguraCartaz.grade} />}
+          renderItem={({ item }) => <Cartaz anime={item} largura={larguraCartaz} />}
           numColumns={COLUNAS}
           columnWrapperStyle={styles.coluna}
           contentContainerStyle={[styles.grade, { paddingBottom: alturaAbas + Espacamento.xl }]}
@@ -149,7 +151,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Espacamento.lg,
     paddingTop: Espacamento.lg,
   },
-  coluna: { justifyContent: 'space-between', marginBottom: Espacamento.lg },
+  coluna: { gap: Espacamento.md, marginBottom: Espacamento.xl },
   exploracao: {
     paddingHorizontal: Espacamento.lg,
     paddingTop: Espacamento.xl,
