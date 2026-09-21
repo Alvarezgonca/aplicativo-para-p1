@@ -1,24 +1,30 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Cores, Fonte } from '@/constants/tema';
+import { BarraSuperior } from '@/componentes/barra-superior';
+import { Destaque } from '@/componentes/destaque';
+import { AlturaBarraAbas, Cores } from '@/constants/tema';
 
-export default function TelaIndex() {
+/**
+ * Tela inicial.
+ *
+ * A barra superior fica sobreposta ao banner, que ocupa a area visivel ao
+ * abrir o aplicativo. O restante do conteudo e adicionado abaixo do destaque.
+ */
+export default function TelaInicio() {
   return (
     <View style={styles.container}>
-      <Text style={styles.texto}>Inicio</Text>
+      <BarraSuperior sobreposta />
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.conteudo}>
+        <Destaque />
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Cores.fundo,
-  },
-  texto: {
-    color: Cores.textoSecundario,
-    fontSize: Fonte.titulo,
-  },
+  container: { flex: 1, backgroundColor: Cores.fundo },
+  conteudo: { paddingBottom: AlturaBarraAbas },
 });
