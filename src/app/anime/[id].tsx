@@ -3,14 +3,15 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { LinhaEpisodio } from '@/componentes/linha-episodio';
 import { Selo } from '@/componentes/selo';
 import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
 import { useMinhaLista } from '@/contextos/minha-lista';
 import { buscarAnimePorId } from '@/dados/animes';
-import { proximoEpisodio } from '@/dados/episodios';
+import { listarEpisodios, proximoEpisodio } from '@/dados/episodios';
 
 const ALTURA_BANNER = Math.round(Dimensions.get('window').height * 0.38);
 
@@ -20,6 +21,7 @@ export default function TelaDetalhe() {
   const recuo = useSafeAreaInsets();
   const { estaSalvo, alternar } = useMinhaLista();
   const [sinopseExpandida, setSinopseExpandida] = useState(false);
+  const [abaAtiva, setAbaAtiva] = useState<'episodios' | 'sobre'>('episodios');
 
   const anime = buscarAnimePorId(Number(id));
 
@@ -38,10 +40,23 @@ export default function TelaDetalhe() {
 
   const salvo = estaSalvo(anime.id);
   const episodio = proximoEpisodio(anime);
+  const episodios = listarEpisodios(anime.id);
 
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.conteudo}>
+      <FlatList
+        data={abaAtiva === 'episodios' ? episodios : []}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.listaEpisodios}>
+            <LinhaEpisodio episodio={item} />
+          </View>
+        )}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.conteudo}
+        ItemSeparatorComponent={() => <View style={styles.separador} />}
+        ListHeaderComponent={
+      <>
         <View style={styles.banner}>
           <Image source={anime.banner} style={styles.imagemBanner} contentFit="cover" transition={300} />
           <LinearGradient
@@ -113,21 +128,50 @@ export default function TelaDetalhe() {
             </Pressable>
           </View>
 
-          <Pressable onPress={() => setSinopseExpandida((atual) => !atual)}>
-            <Text style={styles.sinopse} numberOfLines={sinopseExpandida ? undefined : 3}>
-              {anime.sinopse}
-            </Text>
-            <Text style={styles.verMais}>
-              {sinopseExpandida ? 'Ver menos' : 'Ver mais'}
-            </Text>
-          </Pressable>
-
-          <View style={styles.ficha}>
-            <Text style={styles.fichaRotulo}>Estudio</Text>
-            <Text style={styles.fichaValor}>{anime.estudio}</Text>
+          <View style={styles.abas}>
+            {(['episodios', 'sobre'] as const).map((aba) => (
+              <Pressable
+                key={aba}
+                style={[styles.aba, abaAtiva === aba && styles.abaAtiva]}
+                onPress={() => setAbaAtiva(aba)}>
+                <Text style={[styles.textoAba, abaAtiva === aba && styles.textoAbaAtiva]}>
+                  {aba === 'episodios' ? `Episodios (${anime.totalEpisodios})` : 'Sobre'}
+                </Text>
+              </Pressable>
+            ))}
           </View>
+
+          {abaAtiva === 'sobre' ? (
+            <View style={styles.sobre}>
+              <Pressable onPress={() => setSinopseExpandida((atual) => !atual)}>
+                <Text
+                  style={styles.sinopse}
+                  numberOfLines={sinopseExpandida ? undefined : 4}>
+                  {anime.sinopse}
+                </Text>
+                <Text style={styles.verMais}>
+                  {sinopseExpandida ? 'Ver menos' : 'Ver mais'}
+                </Text>
+              </Pressable>
+
+              {[
+                ['Estudio', anime.estudio],
+                ['Ano de estreia', String(anime.ano)],
+                ['Episodios', String(anime.totalEpisodios)],
+                ['Duracao media', `${anime.duracaoMedia} min`],
+                ['Audio', anime.dublado ? 'Legendado e dublado' : 'Legendado'],
+              ].map(([rotulo, valor]) => (
+                <View key={rotulo} style={styles.ficha}>
+                  <Text style={styles.fichaRotulo}>{rotulo}</Text>
+                  <Text style={styles.fichaValor}>{valor}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
         </View>
-      </ScrollView>
+      </>
+        }
+      />
 
       {/* Botao de voltar sobreposto, ja que a pilha esconde o cabecalho. */}
       <Pressable
@@ -143,6 +187,7 @@ export default function TelaDetalhe() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Cores.fundo },
   conteudo: { paddingBottom: Espacamento.xxl },
+  listaEpisodios: { paddingHorizontal: Espacamento.lg },
   naoEncontrado: {
     flex: 1,
     alignItems: 'center',
@@ -214,6 +259,27 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: Espacamento.sm,
   },
+  separador: {
+    height: 1,
+    backgroundColor: Cores.divisoria,
+    marginHorizontal: Espacamento.lg,
+  },
+  abas: {
+    flexDirection: 'row',
+    gap: Espacamento.xl,
+    borderBottomWidth: 1,
+    borderBottomColor: Cores.divisoria,
+    marginTop: Espacamento.xl,
+  },
+  aba: { paddingBottom: Espacamento.md },
+  abaAtiva: { borderBottomWidth: 2, borderBottomColor: Cores.marca },
+  textoAba: {
+    color: Cores.textoTerciario,
+    fontSize: Fonte.corpo,
+    fontWeight: '700',
+  },
+  textoAbaAtiva: { color: Cores.texto },
+  sobre: { paddingBottom: Espacamento.lg },
   ficha: {
     flexDirection: 'row',
     justifyContent: 'space-between',
