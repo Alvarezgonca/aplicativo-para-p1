@@ -1,9 +1,11 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-export default function Inicio() {
+import { Cores, Fonte } from '@/constants/tema';
+
+export default function TelaBusca() {
   return (
     <View style={styles.container}>
-      <Text style={styles.texto}>Projeto limpo e pronto para comecar.</Text>
+      <Text style={styles.texto}>Buscar</Text>
     </View>
   );
 }
@@ -13,10 +15,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#000000',
+    backgroundColor: Cores.fundo,
   },
   texto: {
-    color: '#FFFFFF',
-    fontSize: 16,
+    color: Cores.textoSecundario,
+    fontSize: Fonte.titulo,
   },
 });
