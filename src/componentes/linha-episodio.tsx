@@ -1,53 +1,62 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { BarraProgresso } from '@/componentes/barra-progresso';
 import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
-import type { Episodio } from '@/dados/episodios';
+import type { Episodio } from '@/services/tipos';
+
+interface Props {
+  episodio: Episodio;
+  /** Duracao do episodio em minutos, quando conhecida. */
+  duracao: number | null;
+  /** Fracao ja assistida, de 0 a 1. */
+  progresso?: number;
+  aoPressionar: () => void;
+}
 
 /**
  * Uma linha da lista de episodios da tela de detalhe.
  *
- * A miniatura carrega o indicador de reproducao e, quando o episodio foi
+ * A miniatura carrega o indicador de reproducao e, quando o episodio ja foi
  * iniciado, a barra de progresso rente a base.
  */
-export function LinhaEpisodio({ episodio }: { episodio: Episodio }) {
-  const router = useRouter();
-  const concluido = episodio.progresso >= 1;
+export function LinhaEpisodio({ episodio, duracao, progresso = 0, aoPressionar }: Props) {
+  const concluido = progresso >= 0.95;
 
   return (
     <Pressable
       style={({ pressed }) => [styles.linha, pressed && styles.pressionada]}
-      onPress={() =>
-        router.push({ pathname: '/player/[episodioId]', params: { episodioId: episodio.id } })
-      }>
+      onPress={aoPressionar}>
       <View style={styles.moldura}>
-        <Image source={episodio.miniatura} style={styles.imagem} contentFit="cover" transition={200} />
+        {episodio.miniatura ? (
+          <Image
+            source={episodio.miniatura}
+            style={styles.imagem}
+            contentFit="cover"
+            transition={200}
+          />
+        ) : null}
         <View style={styles.sobreposicao}>
           <Ionicons name={concluido ? 'refresh' : 'play'} size={16} color={Cores.texto} />
         </View>
-        {episodio.progresso > 0 ? (
+        {progresso > 0 ? (
           <View style={styles.progresso}>
-            <BarraProgresso progresso={episodio.progresso} />
+            <BarraProgresso progresso={progresso} />
           </View>
         ) : null}
       </View>
 
       <View style={styles.informacoes}>
-        <Text style={styles.numero}>Episodio {episodio.numero}</Text>
+        <Text style={styles.numero}>Episódio {episodio.numero}</Text>
         <Text style={styles.titulo} numberOfLines={2}>
           {episodio.titulo}
         </Text>
         <Text style={styles.duracao}>
-          {episodio.duracao} min{concluido ? ' · assistido' : ''}
+          {duracao ? `${duracao} min` : ''}
+          {concluido ? (duracao ? ' · assistido' : 'Assistido') : ''}
         </Text>
       </View>
-
-      {episodio.premium ? (
-        <Ionicons name="lock-closed" size={14} color={Cores.dourado} />
-      ) : null}
     </Pressable>
   );
 }
