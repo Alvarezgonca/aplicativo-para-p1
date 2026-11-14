@@ -208,7 +208,7 @@ export default function TelaDetalhe() {
         ) : null}
 
         <View style={styles.acoesSecundarias}>
-          <Pressable style={styles.acao} onPress={() => alternar(anime.id)}>
+          <Pressable style={styles.acao} onPress={() => alternar(anime)}>
             <Ionicons
               name={salvo ? 'bookmark' : 'bookmark-outline'}
               size={22}

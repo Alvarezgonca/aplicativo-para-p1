@@ -21,7 +21,7 @@ const opcoes: { icone: NomeIcone; rotulo: string; detalhe: string }[] = [
 ];
 
 export default function TelaPerfil() {
-  const { salvos } = useMinhaLista();
+  const { itens: salvos } = useMinhaLista();
   const alturaAbas = useAlturaBarraAbas();
   const [notificacoes, setNotificacoes] = useState(true);
   const [apenasDublados, setApenasDublados] = useState(false);

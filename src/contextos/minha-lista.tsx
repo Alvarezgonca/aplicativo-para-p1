@@ -1,107 +1,119 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 
-import { animes, type Anime } from '@/dados/animes';
+import { storage } from '@/services/storage';
+import type { AnimeResumo } from '@/services/tipos';
+
+/** Um titulo salvo, com o momento em que entrou na lista. */
+export interface ItemLista extends AnimeResumo {
+  salvoEm: number;
+}
 
 interface ValorContexto {
-  /** Identificadores dos animes salvos, na ordem em que foram adicionados. */
-  salvos: number[];
-  /** Animes salvos ja resolvidos a partir do catalogo. */
-  animesSalvos: Anime[];
-  /** Falso enquanto a lista gravada ainda esta sendo lida do disco. */
+  /** Titulos salvos, do mais recente para o mais antigo. */
+  itens: ItemLista[];
+  /** Falso enquanto a lista gravada ainda esta sendo lida do aparelho. */
   carregado: boolean;
   estaSalvo: (id: number) => boolean;
-  alternar: (id: number) => void;
+  alternar: (anime: AnimeResumo) => void;
   remover: (id: number) => void;
 }
 
 const Contexto = createContext<ValorContexto | undefined>(undefined);
 
-/** Chave usada no armazenamento local do aparelho. */
-const CHAVE = '@crunchyroll:minha-lista';
-
-/** Titulos que ja aparecem salvos na primeira abertura do aplicativo. */
-const INICIAIS = [1, 9, 11, 16];
+/** Chave no armazenamento local (o servico de storage acrescenta o prefixo). */
+const CHAVE = 'minha-lista';
 
 /**
- * Guarda a lista de animes salvos pelo usuario e a mantem entre aberturas.
+ * Copia so os campos do resumo. A tela de detalhe entrega um AnimeDetalhe,
+ * com episodios, personagens e recomendacoes; gravar tudo isso encheria o
+ * armazenamento sem necessidade, ja que a lista so mostra o cartaz.
+ */
+function resumir(anime: AnimeResumo): AnimeResumo {
+  return {
+    id: anime.id,
+    titulo: anime.titulo,
+    tituloRomaji: anime.tituloRomaji,
+    tituloNativo: anime.tituloNativo,
+    capa: anime.capa,
+    capaGrande: anime.capaGrande,
+    banner: anime.banner,
+    cor: anime.cor,
+    nota: anime.nota,
+    generos: anime.generos,
+    ano: anime.ano,
+    totalEpisodios: anime.totalEpisodios,
+    formato: anime.formato,
+  };
+}
+
+/**
+ * Guarda a lista de animes salvos e a mantem entre aberturas do aplicativo.
  *
- * O botao de salvar fica na tela de detalhe e a exibicao na aba de lista. Como
- * sao telas irmas, o estado nao pode ser passado por propriedades e vive aqui,
- * acima de ambas na arvore de componentes.
+ * O botao de salvar fica no detalhe e a exibicao na aba Minha lista. Como sao
+ * telas diferentes, o estado vive aqui, acima de ambas na arvore, e chega a
+ * elas pelo contexto. O estado em memoria e a copia de trabalho; o
+ * AsyncStorage e a copia que sobrevive ao fechamento do aplicativo.
+ *
+ * Os dados do anime sao gravados junto com o identificador, e nao so o
+ * identificador: assim a lista abre na hora e funciona mesmo sem internet.
  */
 export function ProvedorMinhaLista({ children }: { children: ReactNode }) {
-  const [salvos, setSalvos] = useState<number[]>(INICIAIS);
+  const [itens, setItens] = useState<ItemLista[]>([]);
   const [carregado, setCarregado] = useState(false);
 
   /** Le a lista gravada uma unica vez, na montagem do provedor. */
   useEffect(() => {
-    let ativo = true;
-
-    AsyncStorage.getItem(CHAVE)
-      .then((bruto) => {
-        if (!ativo || bruto === null) {
-          return;
-        }
-        const lido: unknown = JSON.parse(bruto);
-        // O conteudo vem do disco e pode ter sido gravado por uma versao
-        // anterior do aplicativo, entao o formato e verificado antes do uso.
-        if (Array.isArray(lido) && lido.every((item) => typeof item === 'number')) {
-          setSalvos(lido);
-        }
-      })
-      .catch(() => {
-        // Falha de leitura nao deve impedir o uso: a lista inicial permanece.
-      })
-      .finally(() => {
-        if (ativo) {
-          setCarregado(true);
-        }
-      });
-
-    return () => {
-      ativo = false;
-    };
-  }, []);
-
-  /**
-   * Grava a lista a cada alteracao, mas apenas depois da leitura inicial, para
-   * que o valor padrao nao sobrescreva o que ja estava no disco.
-   */
-  useEffect(() => {
-    if (!carregado) {
-      return;
-    }
-    AsyncStorage.setItem(CHAVE, JSON.stringify(salvos)).catch(() => {
-      // Sem tratamento adicional: a lista continua valida em memoria.
+    storage.get<ItemLista[]>(CHAVE, []).then((lidos) => {
+      // O conteudo vem do disco e pode estar num formato antigo.
+      setItens(Array.isArray(lidos) ? lidos.filter((item) => typeof item?.id === 'number') : []);
+      setCarregado(true);
     });
-  }, [salvos, carregado]);
-
-  const alternar = useCallback((id: number) => {
-    setSalvos((atual) =>
-      atual.includes(id) ? atual.filter((salvo) => salvo !== id) : [id, ...atual],
-    );
   }, []);
 
-  const remover = useCallback((id: number) => {
-    setSalvos((atual) => atual.filter((salvo) => salvo !== id));
+  /** Atualiza a memoria e grava a nova lista no aparelho. */
+  const salvarLista = useCallback((novos: ItemLista[]) => {
+    setItens(novos);
+    storage.set(CHAVE, novos);
   }, []);
 
-  const valor = useMemo<ValorContexto>(() => {
-    const animesSalvos = salvos.flatMap((id) => {
-      const anime = animes.find((item) => item.id === id);
-      return anime ? [anime] : [];
-    });
+  const alternar = useCallback(
+    (anime: AnimeResumo) => {
+      if (!carregado) {
+        return;
+      }
+      const jaSalvo = itens.some((item) => item.id === anime.id);
+      salvarLista(
+        jaSalvo
+          ? itens.filter((item) => item.id !== anime.id)
+          : [{ ...resumir(anime), salvoEm: Date.now() }, ...itens],
+      );
+    },
+    [itens, carregado, salvarLista],
+  );
 
-    return {
-      salvos,
-      animesSalvos,
+  const remover = useCallback(
+    (id: number) => salvarLista(itens.filter((item) => item.id !== id)),
+    [itens, salvarLista],
+  );
+
+  const valor = useMemo<ValorContexto>(
+    () => ({
+      itens,
       carregado,
-      estaSalvo: (id: number) => salvos.includes(id),
+      estaSalvo: (id: number) => itens.some((item) => item.id === id),
       alternar,
       remover,
-    };
-  }, [salvos, carregado, alternar, remover]);
+    }),
+    [itens, carregado, alternar, remover],
+  );
 
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
 }

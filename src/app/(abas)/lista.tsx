@@ -8,12 +8,11 @@ import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
 import { useAlturaBarraAbas } from '@/hooks/use-altura-barra-abas';
 import { useLarguraGrade } from '@/hooks/use-largura-grade';
 import { useMinhaLista } from '@/contextos/minha-lista';
-import { progressoDaSerie } from '@/dados/episodios';
 
 const COLUNAS = 3;
 
 export default function TelaLista() {
-  const { animesSalvos, remover } = useMinhaLista();
+  const { itens: animesSalvos, remover } = useMinhaLista();
   const alturaAbas = useAlturaBarraAbas();
   const larguraCartaz = useLarguraGrade(COLUNAS);
   const router = useRouter();
@@ -45,12 +44,7 @@ export default function TelaLista() {
           <Pressable
             onLongPress={() => confirmarRemocao(item.id, item.titulo)}
             delayLongPress={350}>
-            <Cartaz
-              anime={item}
-              largura={larguraCartaz}
-              mostrarNota={false}
-              progresso={progressoDaSerie(item)}
-            />
+            <Cartaz anime={item} largura={larguraCartaz} mostrarNota={false} />
           </Pressable>
         )}
         ListHeaderComponent={
@@ -60,8 +54,8 @@ export default function TelaLista() {
               <View style={styles.linhaResumo}>
                 <Text style={styles.subtitulo}>
                   {animesSalvos.length === 1
-                    ? '1 titulo salvo'
-                    : `${animesSalvos.length} titulos salvos`}
+                    ? '1 título salvo'
+                    : `${animesSalvos.length} títulos salvos`}
                 </Text>
                 <View style={styles.dica}>
                   <Ionicons name="hand-left-outline" size={12} color={Cores.textoTerciario} />
@@ -74,14 +68,14 @@ export default function TelaLista() {
         ListEmptyComponent={
           <View style={styles.vazio}>
             <Ionicons name="bookmark-outline" size={52} color={Cores.textoTerciario} />
-            <Text style={styles.vazioTitulo}>Sua lista esta vazia</Text>
+            <Text style={styles.vazioTitulo}>Sua lista está vazia</Text>
             <Text style={styles.vazioTexto}>
-              Salve os titulos que quiser assistir depois e eles aparecem aqui.
+              Salve os títulos que quiser assistir depois e eles aparecem aqui.
             </Text>
             <Pressable
               style={({ pressed }) => [styles.botao, pressed && styles.pressionado]}
               onPress={() => router.push('/busca')}>
-              <Text style={styles.textoBotao}>Explorar catalogo</Text>
+              <Text style={styles.textoBotao}>Explorar catálogo</Text>
             </Pressable>
           </View>
         }
