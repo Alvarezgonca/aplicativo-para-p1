@@ -1,12 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as WebBrowser from 'expo-web-browser';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   FlatList,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -14,6 +16,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Carrossel } from '@/componentes/carrossel';
 import { Carregando, MensagemErro } from '@/componentes/estado-tela';
 import { LinhaEpisodio } from '@/componentes/linha-episodio';
 import { Selo } from '@/componentes/selo';
@@ -115,6 +118,23 @@ export default function TelaDetalhe() {
   const salvo = estaSalvo(anime.id);
   const primeiro = anime.episodios[0];
 
+  /**
+   * Abre o trailer no navegador interno do aparelho (expo-web-browser). O
+   * usuario assiste e volta para o aplicativo no mesmo ponto, sem sair dele.
+   */
+  function abrirTrailer(codigo: string) {
+    WebBrowser.openBrowserAsync(`https://www.youtube.com/watch?v=${codigo}`);
+  }
+
+  /** Abre a folha de compartilhamento nativa (WhatsApp, e-mail, copiar...). */
+  function compartilhar(titulo: string) {
+    Share.share({
+      message: `Estou de olho em ${titulo}: https://anilist.co/anime/${animeId}`,
+    }).catch(() => {
+      // O usuario fechou a folha ou o navegador nao tem compartilhamento.
+    });
+  }
+
   function abrirEpisodio(numero: number) {
     router.push({
       pathname: '/player/[episodioId]',
@@ -197,6 +217,20 @@ export default function TelaDetalhe() {
             <Text style={[styles.textoAcao, salvo && styles.textoAcaoAtiva]}>
               {salvo ? 'Na lista' : 'Minha lista'}
             </Text>
+          </Pressable>
+
+          {anime.trailer ? (
+            <Pressable
+              style={styles.acao}
+              onPress={() => anime.trailer && abrirTrailer(anime.trailer)}>
+              <Ionicons name="logo-youtube" size={22} color={Cores.texto} />
+              <Text style={styles.textoAcao}>Trailer</Text>
+            </Pressable>
+          ) : null}
+
+          <Pressable style={styles.acao} onPress={() => compartilhar(anime.titulo)}>
+            <Ionicons name="share-social-outline" size={22} color={Cores.texto} />
+            <Text style={styles.textoAcao}>Compartilhar</Text>
           </Pressable>
         </View>
 
@@ -292,6 +326,11 @@ export default function TelaDetalhe() {
           </View>
         )}
         ListHeaderComponent={cabecalho}
+        ListFooterComponent={
+          abaAtiva === 'sobre' ? (
+            <Carrossel titulo="Você também pode gostar" animes={anime.recomendacoes} />
+          ) : undefined
+        }
         ItemSeparatorComponent={() => <View style={styles.separador} />}
         // Animes longos tem centenas de episodios: a FlatList monta so os visiveis.
         initialNumToRender={12}
