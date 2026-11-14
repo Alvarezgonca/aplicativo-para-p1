@@ -32,6 +32,7 @@ export default function LayoutRaiz() {
               contentStyle: { backgroundColor: Cores.fundo },
             }}>
             <Stack.Screen name="(abas)" />
+            <Stack.Screen name="(auth)" />
             <Stack.Screen name="player/[animeId]" options={{ animation: 'fade' }} />
           </Stack>
           <AvisoOffline />
