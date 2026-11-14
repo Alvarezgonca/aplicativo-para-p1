@@ -5,7 +5,6 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { BarraProgresso } from '@/componentes/barra-progresso';
 import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
-import type { Anime } from '@/dados/animes';
 
 /**
  * Largura padrao do cartaz nos carrosseis. Nas grades a largura e calculada a
@@ -13,8 +12,24 @@ import type { Anime } from '@/dados/animes';
  */
 export const LarguraCartaz = { carrossel: 124 } as const;
 
+/**
+ * O que o cartaz precisa saber de um anime. O tipo e declarado aqui, e nao
+ * importado do catalogo, para que o componente aceite qualquer origem de
+ * dados que tenha esses campos: a API, a lista salva ou o historico.
+ */
+export interface DadosCartaz {
+  id: number;
+  titulo: string;
+  capa: string;
+  /** Nota de 0 a 10; nula quando o titulo ainda nao foi avaliado. */
+  nota: number | null;
+  /** Cor de fundo exibida enquanto a imagem carrega. */
+  cor?: string | null;
+  dublado?: boolean;
+}
+
 interface Props {
-  anime: Anime;
+  anime: DadosCartaz;
   largura?: number;
   /** Exibe a legenda abaixo da imagem. */
   mostrarLegenda?: boolean;
@@ -41,7 +56,12 @@ export function Cartaz({
   return (
     <Link href={{ pathname: '/anime/[id]', params: { id: anime.id } }} asChild>
       <Pressable style={({ pressed }) => [{ width: largura }, pressed && styles.pressionado]}>
-        <View style={[styles.moldura, { height: largura * 1.45 }]}>
+        <View
+          style={[
+            styles.moldura,
+            { height: largura * 1.45 },
+            anime.cor ? { backgroundColor: anime.cor } : null,
+          ]}>
           <Image
             source={anime.capa}
             style={styles.imagem}
@@ -68,7 +88,7 @@ export function Cartaz({
             <Text style={styles.titulo} numberOfLines={2}>
               {anime.titulo}
             </Text>
-            {mostrarNota ? (
+            {mostrarNota && anime.nota !== null ? (
               <View style={styles.linhaNota}>
                 <Ionicons name="star" size={11} color={Cores.dourado} />
                 <Text style={styles.nota}>{anime.nota.toFixed(1)}</Text>

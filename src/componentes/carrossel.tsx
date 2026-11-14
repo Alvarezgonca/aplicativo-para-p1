@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Cartaz, LarguraCartaz } from '@/componentes/cartaz';
+import { Cartaz, LarguraCartaz, type DadosCartaz } from '@/componentes/cartaz';
 import { Cores, Espacamento, Fonte } from '@/constants/tema';
-import type { Anime } from '@/dados/animes';
 
 interface Props {
   titulo: string;
-  animes: Anime[];
+  animes: DadosCartaz[];
+  /** Quando informado, o cabecalho vira um botao "Ver tudo". */
+  aoVerTudo?: () => void;
 }
 
 /**
@@ -17,7 +18,7 @@ interface Props {
  * os itens visiveis, mantendo o custo constante independentemente do tamanho
  * da colecao.
  */
-export function Carrossel({ titulo, animes }: Props) {
+export function Carrossel({ titulo, animes, aoVerTudo }: Props) {
   if (animes.length === 0) {
     return null;
   }
@@ -26,7 +27,12 @@ export function Carrossel({ titulo, animes }: Props) {
     <View style={styles.secao}>
       <View style={styles.cabecalho}>
         <Text style={styles.titulo}>{titulo}</Text>
-        <Ionicons name="chevron-forward" size={18} color={Cores.textoTerciario} />
+        {aoVerTudo ? (
+          <Pressable style={styles.verTudo} onPress={aoVerTudo} hitSlop={8}>
+            <Text style={styles.textoVerTudo}>Ver tudo</Text>
+            <Ionicons name="chevron-forward" size={16} color={Cores.marca} />
+          </Pressable>
+        ) : null}
       </View>
 
       <FlatList
@@ -63,6 +69,8 @@ const styles = StyleSheet.create({
     fontSize: Fonte.titulo,
     fontWeight: '700',
   },
+  verTudo: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  textoVerTudo: { color: Cores.marca, fontSize: Fonte.pequena, fontWeight: '700' },
   fileira: { paddingHorizontal: Espacamento.lg },
   separador: { width: Espacamento.md },
 });

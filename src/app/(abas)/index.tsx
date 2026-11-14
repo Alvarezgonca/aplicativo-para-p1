@@ -6,7 +6,7 @@ import { CartaoContinuar } from '@/componentes/cartao-continuar';
 import { Destaque } from '@/componentes/destaque';
 import { Cores, Espacamento, Fonte } from '@/constants/tema';
 import { useAlturaBarraAbas } from '@/hooks/use-altura-barra-abas';
-import { animes } from '@/dados/animes';
+import { animes, animesEmDestaque } from '@/dados/animes';
 import { colecoes } from '@/dados/colecoes';
 import { proximoEpisodio } from '@/dados/episodios';
 
@@ -28,7 +28,7 @@ export default function TelaInicio() {
       <BarraSuperior sobreposta />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: alturaAbas + Espacamento.xl }}>
-        <Destaque />
+        <Destaque animes={animesEmDestaque} />
 
         <View style={styles.secaoContinuar}>
           <Text style={styles.tituloSecao}>Continuar assistindo</Text>

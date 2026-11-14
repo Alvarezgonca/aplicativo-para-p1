@@ -6,37 +6,53 @@ import { useEffect, useState } from 'react';
 import { Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
-import { animesEmDestaque } from '@/dados/animes';
 
 const ALTURA = Math.round(Dimensions.get('window').height * 0.52);
 const INTERVALO_MS = 6000;
 
+/** Campos de um anime usados pelo banner. */
+export interface DadosDestaque {
+  id: number;
+  titulo: string;
+  banner: string | null;
+  generos: string[];
+}
+
 /**
  * Banner superior da tela inicial.
  *
- * Alterna automaticamente entre os titulos marcados como destaque no catalogo.
+ * Alterna automaticamente entre os titulos recebidos pela propriedade animes.
  * O indice atual fica em estado local e e avancado por um temporizador criado
  * no useEffect; a funcao de limpeza cancela o temporizador quando o componente
  * sai de tela, evitando atualizacao de estado em componente desmontado.
  */
-export function Destaque() {
+export function Destaque({ animes }: { animes: DadosDestaque[] }) {
   const [indice, setIndice] = useState(0);
   const router = useRouter();
+  const total = animes.length;
 
   useEffect(() => {
+    if (total < 2) {
+      return;
+    }
     const temporizador = setInterval(() => {
-      setIndice((atual) => (atual + 1) % animesEmDestaque.length);
+      setIndice((atual) => (atual + 1) % total);
     }, INTERVALO_MS);
 
     return () => clearInterval(temporizador);
-  }, []);
+  }, [total]);
 
-  const anime = animesEmDestaque[indice];
+  if (total === 0) {
+    return null;
+  }
+
+  // Se a lista encolher ao recarregar, o indice antigo pode ficar fora dela.
+  const anime = animes[indice % total];
 
   return (
     <View style={styles.container}>
       <Image
-        source={anime.banner}
+        source={anime.banner ?? undefined}
         style={StyleSheet.absoluteFill}
         contentFit="cover"
         transition={400}
@@ -74,10 +90,10 @@ export function Destaque() {
 
         {/* Indicadores de posicao, um por titulo em destaque. */}
         <View style={styles.indicadores}>
-          {animesEmDestaque.map((item, posicao) => (
+          {animes.map((item, posicao) => (
             <View
               key={item.id}
-              style={[styles.ponto, posicao === indice && styles.pontoAtivo]}
+              style={[styles.ponto, posicao === indice % total && styles.pontoAtivo]}
             />
           ))}
         </View>
