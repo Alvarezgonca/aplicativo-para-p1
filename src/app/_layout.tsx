@@ -38,9 +38,8 @@ function Navegacao() {
           headerShown: false,
           contentStyle: { backgroundColor: Cores.fundo },
         }}>
-        <Stack.Screen name="(abas)" />
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="player/[animeId]" options={{ animation: 'fade' }} />
+        <Stack.Screen name="(app)" />
+        <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
       </Stack>
       <AvisoOffline />
     </>
@@ -50,9 +49,9 @@ function Navegacao() {
 /**
  * Layout raiz da aplicacao.
  *
- * Declara uma pilha de navegacao com o grupo de abas na base. As telas de
- * detalhe e de reproducao ficam fora do grupo e sao empilhadas por cima da
- * barra de abas, como acontece no aplicativo original.
+ * A pilha raiz tem dois grupos: (auth), com apresentacao e login, e (app),
+ * com tudo o que exige sessao. Cada grupo decide no proprio layout se o
+ * usuario pode estar ali e redireciona quando nao pode.
  *
  * O provedor de area segura recebe initialWindowMetrics. Sem esse valor ele
  * inicia com as margens indefinidas e nao renderiza os filhos ate o sistema
