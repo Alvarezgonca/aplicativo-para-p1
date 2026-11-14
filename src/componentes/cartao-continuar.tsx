@@ -27,10 +27,18 @@ export function CartaoContinuar({ anime, episodio }: Props) {
     <Pressable
       style={({ pressed }) => [styles.cartao, pressed && styles.pressionado]}
       onPress={() =>
-        router.push({ pathname: '/player/[episodioId]', params: { episodioId: episodio.id } })
+        router.push({
+          pathname: '/player/[animeId]',
+          params: { animeId: anime.id, episodio: episodio.numero },
+        })
       }>
       <View style={styles.moldura}>
-        <Image source={episodio.miniatura} style={styles.imagem} contentFit="cover" transition={200} />
+        <Image
+          source={episodio.miniatura}
+          style={styles.imagem}
+          contentFit="cover"
+          transition={200}
+        />
         <View style={styles.iconePlay}>
           <Ionicons name="play" size={18} color={Cores.texto} />
         </View>

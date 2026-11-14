@@ -136,10 +136,7 @@ export default function TelaDetalhe() {
   }
 
   function abrirEpisodio(numero: number) {
-    router.push({
-      pathname: '/player/[episodioId]',
-      params: { episodioId: `${animeId}-${numero}` },
-    });
+    router.push({ pathname: '/player/[animeId]', params: { animeId, episodio: numero } });
   }
 
   const cabecalho = (

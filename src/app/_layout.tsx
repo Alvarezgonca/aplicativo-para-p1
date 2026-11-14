@@ -4,6 +4,7 @@ import { initialWindowMetrics, SafeAreaProvider } from 'react-native-safe-area-c
 
 import { AvisoOffline } from '@/componentes/aviso-offline';
 import { Cores } from '@/constants/tema';
+import { ProvedorHistorico } from '@/contextos/historico';
 import { ProvedorMinhaLista } from '@/contextos/minha-lista';
 
 /**
@@ -23,17 +24,18 @@ export default function LayoutRaiz() {
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <ProvedorMinhaLista>
-        <StatusBar style="light" />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: Cores.fundo },
-          }}>
-          <Stack.Screen name="(abas)" />
-          <Stack.Screen name="anime/[id]" />
-          <Stack.Screen name="player/[episodioId]" options={{ animation: 'fade' }} />
-        </Stack>
-        <AvisoOffline />
+        <ProvedorHistorico>
+          <StatusBar style="light" />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: Cores.fundo },
+            }}>
+            <Stack.Screen name="(abas)" />
+            <Stack.Screen name="player/[animeId]" options={{ animation: 'fade' }} />
+          </Stack>
+          <AvisoOffline />
+        </ProvedorHistorico>
       </ProvedorMinhaLista>
     </SafeAreaProvider>
   );
