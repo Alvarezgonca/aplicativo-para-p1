@@ -34,6 +34,7 @@ interface Atalho {
 }
 
 const ATALHOS: Atalho[] = [
+  { icone: 'time-outline', rotulo: 'Histórico', destino: '/historico' },
   { icone: 'bookmark-outline', rotulo: 'Minha lista', destino: '/lista' },
   { icone: 'calendar-outline', rotulo: 'Lançamentos da semana', destino: '/simulcast' },
   { icone: 'trophy-outline', rotulo: 'Ranking', destino: '/ranking' },

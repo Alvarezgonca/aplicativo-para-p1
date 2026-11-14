@@ -76,6 +76,7 @@ function emAndamento(registros: RegistroHistorico[]): RegistroHistorico[] {
 
 /** Fileira "Continuar assistindo" da tela inicial; some quando nao ha nada pela metade. */
 export function ContinuarAssistindo({ registros }: { registros: RegistroHistorico[] }) {
+  const router = useRouter();
   const itens = emAndamento(registros);
   if (itens.length === 0) {
     return null;
@@ -83,7 +84,13 @@ export function ContinuarAssistindo({ registros }: { registros: RegistroHistoric
 
   return (
     <View style={styles.secao}>
-      <Text style={styles.tituloSecao}>Continuar assistindo</Text>
+      <View style={styles.cabecalhoSecao}>
+        <Text style={styles.tituloSecao}>Continuar assistindo</Text>
+        <Pressable style={styles.verTudo} onPress={() => router.push('/historico')} hitSlop={8}>
+          <Text style={styles.textoVerTudo}>Histórico</Text>
+          <Ionicons name="chevron-forward" size={16} color={Cores.marca} />
+        </Pressable>
+      </View>
       <FlatList
         data={itens}
         keyExtractor={(item) => `${item.animeId}-${item.episodio}`}
@@ -99,13 +106,16 @@ export function ContinuarAssistindo({ registros }: { registros: RegistroHistoric
 
 const styles = StyleSheet.create({
   secao: { marginTop: Espacamento.xl },
-  tituloSecao: {
-    color: Cores.texto,
-    fontSize: Fonte.titulo,
-    fontWeight: '700',
+  cabecalhoSecao: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: Espacamento.lg,
     marginBottom: Espacamento.md,
   },
+  tituloSecao: { color: Cores.texto, fontSize: Fonte.titulo, fontWeight: '700' },
+  verTudo: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  textoVerTudo: { color: Cores.marca, fontSize: Fonte.pequena, fontWeight: '700' },
   fileira: { paddingHorizontal: Espacamento.lg },
   separador: { width: Espacamento.md },
   cartao: { width: 220 },
