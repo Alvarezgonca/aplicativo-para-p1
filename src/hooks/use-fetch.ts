@@ -1,3 +1,4 @@
+import NetInfo from '@react-native-community/netinfo';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { mensagemDeErro } from '@/services/api';
@@ -56,6 +57,22 @@ export function useFetch<T>(buscar: (forcar: boolean) => Promise<T>) {
         }
       });
   }, [buscar, versao]);
+
+  /**
+   * Quando a conexao volta depois de uma queda, a busca e refeita sozinha:
+   * uma tela que mostrava erro por falta de rede se recupera sem o usuario
+   * precisar tocar em "Tentar de novo".
+   */
+  useEffect(() => {
+    let estavaOffline = false;
+    return NetInfo.addEventListener((estado) => {
+      const online = estado.isConnected !== false;
+      if (online && estavaOffline) {
+        setVersao((atual) => atual + 1);
+      }
+      estavaOffline = !online;
+    });
+  }, []);
 
   /** Refaz a busca do zero, com o indicador de carregamento. Usado no "Tentar de novo". */
   const recarregar = useCallback(() => {

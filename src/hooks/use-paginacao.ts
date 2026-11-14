@@ -1,3 +1,4 @@
+import NetInfo from '@react-native-community/netinfo';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { mensagemDeErro } from '@/services/api';
@@ -87,6 +88,18 @@ export function usePaginacao<T>(
         }
       });
   }, [chave, buscarPagina, versao]);
+
+  /** Ao recuperar a conexao, refaz a primeira pagina (cobre a tela que mostrava erro). */
+  useEffect(() => {
+    let estavaOffline = false;
+    return NetInfo.addEventListener((estado) => {
+      const online = estado.isConnected !== false;
+      if (online && estavaOffline) {
+        setVersao((atual) => atual + 1);
+      }
+      estavaOffline = !online;
+    });
+  }, []);
 
   /** Verdadeiro enquanto a primeira pagina da consulta atual nao chegou. */
   const loading = estado.chave !== chave;

@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { initialWindowMetrics, SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { AvisoOffline } from '@/componentes/aviso-offline';
 import { Cores } from '@/constants/tema';
 import { ProvedorMinhaLista } from '@/contextos/minha-lista';
 
@@ -32,6 +33,7 @@ export default function LayoutRaiz() {
           <Stack.Screen name="anime/[id]" />
           <Stack.Screen name="player/[episodioId]" options={{ animation: 'fade' }} />
         </Stack>
+        <AvisoOffline />
       </ProvedorMinhaLista>
     </SafeAreaProvider>
   );
