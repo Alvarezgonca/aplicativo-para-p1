@@ -8,7 +8,7 @@ type NomeIcone = keyof typeof Ionicons.glyphMap;
 
 /** Descricao das cinco abas, na ordem em que aparecem na barra inferior. */
 const abas: { nome: string; rotulo: string; icone: NomeIcone }[] = [
-  { nome: 'index', rotulo: 'Inicio', icone: 'home' },
+  { nome: 'index', rotulo: 'Início', icone: 'home' },
   { nome: 'busca', rotulo: 'Buscar', icone: 'search' },
   { nome: 'simulcast', rotulo: 'Simulcast', icone: 'calendar' },
   { nome: 'lista', rotulo: 'Minha lista', icone: 'bookmark' },
