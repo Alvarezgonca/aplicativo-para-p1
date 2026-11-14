@@ -37,6 +37,8 @@ interface Props {
   mostrarNota?: boolean;
   /** Fracao ja assistida da serie. Quando informada, desenha a barra na base. */
   progresso?: number;
+  /** Chamado no toque, antes da navegacao para o detalhe. */
+  aoPressionar?: () => void;
 }
 
 /**
@@ -52,13 +54,17 @@ export function Cartaz({
   mostrarLegenda = true,
   mostrarNota = true,
   progresso,
+  aoPressionar,
 }: Props) {
   return (
     // A largura fica numa View externa: com Link asChild, o estilo em forma de
     // funcao do Pressable nao chega ao elemento na versao web, e o cartaz
     // passava a ter a largura do proprio titulo.
     <View style={{ width: largura }}>
-      <Link href={{ pathname: '/anime/[id]', params: { id: anime.id } }} asChild>
+      <Link
+        href={{ pathname: '/anime/[id]', params: { id: anime.id } }}
+        onPress={aoPressionar}
+        asChild>
         <Pressable style={({ pressed }) => pressed && styles.pressionado}>
           <View
             style={[
