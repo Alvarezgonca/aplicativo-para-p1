@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CabecalhoTela } from '@/componentes/cabecalho-tela';
 import { Carregando, MensagemErro, RodapePaginacao, Vazio } from '@/componentes/estado-tela';
 import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
+import { usePreferencias } from '@/contextos/preferencias';
 import { usePaginacao } from '@/hooks/use-paginacao';
 import { catalogo } from '@/services/anilist';
 import { comCache, MINUTO } from '@/services/cache';
@@ -32,6 +33,7 @@ const CRITERIOS: { valor: CriterioRanking; rotulo: string }[] = [
 const idDoAnime = (anime: AnimeResumo) => anime.id;
 
 function LinhaRanking({ anime, posicao }: { anime: AnimeResumo; posicao: number }) {
+  const { preferencias, tituloDe } = usePreferencias();
   const detalhes = [
     anime.formato,
     anime.ano,
@@ -49,7 +51,7 @@ function LinhaRanking({ anime, posicao }: { anime: AnimeResumo; posicao: number 
       <Text style={[styles.posicao, posicao <= 3 && styles.posicaoPodio]}>{posicao}</Text>
 
       <Image
-        source={anime.capa}
+        source={preferencias.economiaDados ? anime.capaPequena : anime.capa}
         style={[styles.capa, anime.cor ? { backgroundColor: anime.cor } : null]}
         contentFit="cover"
         transition={200}
@@ -57,7 +59,7 @@ function LinhaRanking({ anime, posicao }: { anime: AnimeResumo; posicao: number 
 
       <View style={styles.informacoes}>
         <Text style={styles.titulo} numberOfLines={2}>
-          {anime.titulo}
+          {tituloDe(anime)}
         </Text>
         {detalhes ? <Text style={styles.detalhes}>{detalhes}</Text> : null}
         <Text style={styles.generos} numberOfLines={1}>

@@ -16,6 +16,7 @@ import { BarraSuperior } from '@/componentes/barra-superior';
 import { Carregando, MensagemErro, Vazio } from '@/componentes/estado-tela';
 import { Selo } from '@/componentes/selo';
 import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
+import { usePreferencias } from '@/contextos/preferencias';
 import { useAlturaBarraAbas } from '@/hooks/use-altura-barra-abas';
 import { useFetch } from '@/hooks/use-fetch';
 import { catalogo } from '@/services/anilist';
@@ -56,6 +57,7 @@ function formatarHora(horario: number): string {
 function CartaoLancamento({ lancamento, agora }: { lancamento: Lancamento; agora: number }) {
   const router = useRouter();
   const { anime } = lancamento;
+  const { tituloDe } = usePreferencias();
   const aguardando = lancamento.horario > agora;
 
   return (
@@ -84,7 +86,7 @@ function CartaoLancamento({ lancamento, agora }: { lancamento: Lancamento; agora
 
       <View style={styles.informacoes}>
         <Text style={styles.tituloAnime} numberOfLines={2}>
-          {anime.titulo}
+          {tituloDe(anime)}
         </Text>
         <Text style={styles.episodio}>
           Episódio {lancamento.episodio}

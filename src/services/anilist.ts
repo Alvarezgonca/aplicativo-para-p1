@@ -314,6 +314,7 @@ function paraResumo(midia: MidiaApi): AnimeResumo {
     tituloNativo: midia.title.native,
     capa: midia.coverImage.large,
     capaGrande: midia.coverImage.extraLarge,
+    capaPequena: midia.coverImage.medium,
     banner: midia.bannerImage,
     cor: midia.coverImage.color,
     // A API da a nota de 0 a 100; o aplicativo exibe de 0 a 10.
@@ -413,7 +414,10 @@ export const catalogo = {
     );
     return {
       // O banner rotativo so aceita titulos com imagem horizontal.
-      destaques: dados.destaques.media.filter((midia) => midia.bannerImage).map(paraResumo).slice(0, 6),
+      destaques: dados.destaques.media
+        .filter((midia) => midia.bannerImage)
+        .map(paraResumo)
+        .slice(0, 6),
       temporada: dados.temporada.media.map(paraResumo),
       populares: dados.populares.media.map(paraResumo),
       melhores: dados.melhores.media.map(paraResumo),

@@ -18,6 +18,8 @@ export interface AnimeResumo {
   capa: string;
   /** Poster vertical em tamanho grande, para telas de destaque. */
   capaGrande: string;
+  /** Poster pequeno, usado quando a economia de dados esta ligada. */
+  capaPequena: string;
   /** Imagem horizontal; nem todo titulo tem uma. */
   banner: string | null;
   /** Cor predominante da capa, usada como fundo enquanto a imagem carrega. */

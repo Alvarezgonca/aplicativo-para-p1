@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
+import { usePreferencias } from '@/contextos/preferencias';
 
 const ALTURA = Math.round(Dimensions.get('window').height * 0.52);
 const INTERVALO_MS = 6000;
@@ -14,6 +15,8 @@ const INTERVALO_MS = 6000;
 export interface DadosDestaque {
   id: number;
   titulo: string;
+  tituloRomaji?: string;
+  tituloNativo?: string | null;
   banner: string | null;
   generos: string[];
 }
@@ -28,6 +31,7 @@ export interface DadosDestaque {
  */
 export function Destaque({ animes }: { animes: DadosDestaque[] }) {
   const [indice, setIndice] = useState(0);
+  const { tituloDe } = usePreferencias();
   const router = useRouter();
   const total = animes.length;
 
@@ -67,7 +71,7 @@ export function Destaque({ animes }: { animes: DadosDestaque[] }) {
 
       <View style={styles.conteudo}>
         <Text style={styles.titulo} numberOfLines={2}>
-          {anime.titulo}
+          {tituloDe(anime)}
         </Text>
 
         <Text style={styles.generos}>{anime.generos.join('  •  ')}</Text>

@@ -20,7 +20,12 @@ export const PREFERENCIAS_PADRAO: Preferencias = {
   economiaDados: false,
 };
 
-type Titulos = Pick<AnimeResumo, 'titulo' | 'tituloRomaji' | 'tituloNativo'>;
+/**
+ * Os titulos alternativos sao opcionais: dados gravados por versoes antigas
+ * (ou vindos do historico) podem ter so o titulo principal.
+ */
+type Titulos = Pick<AnimeResumo, 'titulo'> &
+  Partial<Pick<AnimeResumo, 'tituloRomaji' | 'tituloNativo'>>;
 
 interface ValorContexto {
   preferencias: Preferencias;

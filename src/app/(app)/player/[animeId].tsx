@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BarraProgresso } from '@/componentes/barra-progresso';
 import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
 import { FRACAO_CONCLUIDO, useHistorico } from '@/contextos/historico';
+import { usePreferencias } from '@/contextos/preferencias';
 import { useFetch } from '@/hooks/use-fetch';
 import { catalogo } from '@/services/anilist';
 import { comCache, MINUTO } from '@/services/cache';
@@ -20,6 +21,9 @@ const PASSO = 0.005;
 
 /** De quanto em quanto tempo o progresso e gravado no historico. */
 const INTERVALO_GRAVACAO_MS = 5000;
+
+/** Pausa entre o fim de um episodio e o inicio do proximo, na reproducao automatica. */
+const ESPERA_PROXIMO_MS = 3000;
 
 /** Converte uma fracao do episodio em rotulo de tempo no formato m:ss. */
 function formatarTempo(minutosTotais: number, fracao: number): string {
@@ -47,6 +51,7 @@ function Reprodutor({ anime, episodio, proximo, progressoInicial }: PropsReprodu
   const router = useRouter();
   const recuo = useSafeAreaInsets();
   const { registrar } = useHistorico();
+  const { preferencias, tituloDe } = usePreferencias();
   const duracao = anime.duracao ?? 24;
 
   const [reproduzindo, setReproduzindo] = useState(true);
@@ -97,6 +102,26 @@ function Reprodutor({ anime, episodio, proximo, progressoInicial }: PropsReprodu
   useEffect(() => gravar, [gravar]);
 
   const concluido = progresso >= 1;
+  const seguirSozinho = concluido && preferencias.reproducaoAutomatica && proximo !== undefined;
+
+  /**
+   * Reproducao automatica: ao terminar, espera alguns segundos e abre o
+   * proximo episodio. Se o usuario sair antes ou voltar a barra, a limpeza
+   * do efeito cancela a troca.
+   */
+  useEffect(() => {
+    if (!seguirSozinho || !proximo) {
+      return;
+    }
+    gravar();
+    const temporizador = setTimeout(() => {
+      router.replace({
+        pathname: '/player/[animeId]',
+        params: { animeId: anime.id, episodio: proximo.numero },
+      });
+    }, ESPERA_PROXIMO_MS);
+    return () => clearTimeout(temporizador);
+  }, [seguirSozinho, proximo, anime.id, router, gravar]);
 
   function pausarOuContinuar() {
     if (concluido) {
@@ -153,7 +178,7 @@ function Reprodutor({ anime, episodio, proximo, progressoInicial }: PropsReprodu
             </Pressable>
             <View style={styles.identificacao}>
               <Text style={styles.tituloAnime} numberOfLines={1}>
-                {anime.titulo}
+                {tituloDe(anime)}
               </Text>
               <Text style={styles.tituloEpisodio} numberOfLines={1}>
                 E{episodio.numero} · {episodio.titulo}
@@ -197,9 +222,11 @@ function Reprodutor({ anime, episodio, proximo, progressoInicial }: PropsReprodu
 
             <View style={styles.opcoes}>
               <Text style={styles.situacao}>
-                {progresso >= FRACAO_CONCLUIDO
-                  ? 'Episódio assistido'
-                  : 'Progresso salvo no aparelho'}
+                {seguirSozinho
+                  ? 'O próximo episódio começa em instantes...'
+                  : progresso >= FRACAO_CONCLUIDO
+                    ? 'Episódio assistido'
+                    : 'Progresso salvo no aparelho'}
               </Text>
               {proximo ? (
                 <Pressable style={styles.opcao} onPress={irParaProximo}>

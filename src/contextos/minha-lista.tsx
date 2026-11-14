@@ -48,6 +48,7 @@ function resumir(anime: AnimeResumo): AnimeResumo {
     tituloNativo: anime.tituloNativo,
     capa: anime.capa,
     capaGrande: anime.capaGrande,
+    capaPequena: anime.capaPequena,
     banner: anime.banner,
     cor: anime.cor,
     nota: anime.nota,

@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { BarraProgresso } from '@/componentes/barra-progresso';
 import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
+import { usePreferencias } from '@/contextos/preferencias';
 
 /**
  * Largura padrao do cartaz nos carrosseis. Nas grades a largura e calculada a
@@ -20,7 +21,11 @@ export const LarguraCartaz = { carrossel: 124 } as const;
 export interface DadosCartaz {
   id: number;
   titulo: string;
+  tituloRomaji?: string;
+  tituloNativo?: string | null;
   capa: string;
+  /** Versao menor da capa, usada com a economia de dados ligada. */
+  capaPequena?: string;
   /** Nota de 0 a 10; nula quando o titulo ainda nao foi avaliado. */
   nota: number | null;
   /** Cor de fundo exibida enquanto a imagem carrega. */
@@ -56,6 +61,9 @@ export function Cartaz({
   progresso,
   aoPressionar,
 }: Props) {
+  const { preferencias, tituloDe } = usePreferencias();
+  const capa = preferencias.economiaDados ? (anime.capaPequena ?? anime.capa) : anime.capa;
+
   return (
     // A largura fica numa View externa: com Link asChild, o estilo em forma de
     // funcao do Pressable nao chega ao elemento na versao web, e o cartaz
@@ -72,7 +80,7 @@ export function Cartaz({
               { height: largura * 1.45 },
               anime.cor ? { backgroundColor: anime.cor } : null,
             ]}>
-            <Image source={anime.capa} style={styles.imagem} contentFit="cover" transition={200} />
+            <Image source={capa} style={styles.imagem} contentFit="cover" transition={200} />
             {anime.dublado ? (
               <View style={styles.etiquetaDublado}>
                 <Text style={styles.textoDublado}>DUB</Text>
@@ -91,7 +99,7 @@ export function Cartaz({
               {/* A altura minima reserva sempre duas linhas: sem isso, cartazes
                 de titulo curto ficam mais baixos e a base da grade serrilha. */}
               <Text style={styles.titulo} numberOfLines={2}>
-                {anime.titulo}
+                {tituloDe(anime)}
               </Text>
               {mostrarNota && anime.nota !== null ? (
                 <View style={styles.linhaNota}>

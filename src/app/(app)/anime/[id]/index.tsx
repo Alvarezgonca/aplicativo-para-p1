@@ -23,6 +23,7 @@ import { Selo } from '@/componentes/selo';
 import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
 import { FRACAO_CONCLUIDO, useHistorico, type RegistroHistorico } from '@/contextos/historico';
 import { useMinhaLista } from '@/contextos/minha-lista';
+import { usePreferencias } from '@/contextos/preferencias';
 import { useFetch } from '@/hooks/use-fetch';
 import { catalogo } from '@/services/anilist';
 import { comCache, MINUTO } from '@/services/cache';
@@ -112,6 +113,7 @@ export default function TelaDetalhe() {
   const { height } = useWindowDimensions();
   const { estaSalvo, alternar } = useMinhaLista();
   const { registros, progressoDe } = useHistorico();
+  const { tituloDe } = usePreferencias();
   const [sinopseExpandida, setSinopseExpandida] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState<Aba>('episodios');
   const [agora] = useState(() => Date.now());
@@ -142,6 +144,8 @@ export default function TelaDetalhe() {
   }
 
   const salvo = estaSalvo(anime.id);
+  const titulo = tituloDe(anime);
+  const subtitulo = titulo === anime.titulo ? anime.tituloRomaji : anime.titulo;
   const sugerido = sugerirEpisodio(
     anime.episodios,
     registros.find((item) => item.animeId === anime.id),
@@ -185,10 +189,9 @@ export default function TelaDetalhe() {
       </View>
 
       <View style={styles.corpo}>
-        <Text style={styles.titulo}>{anime.titulo}</Text>
-        {anime.tituloRomaji !== anime.titulo ? (
-          <Text style={styles.tituloOriginal}>{anime.tituloRomaji}</Text>
-        ) : null}
+        <Text style={styles.titulo}>{titulo}</Text>
+        {/* Embaixo vai o outro nome: o romaji, ou o ingles se o romaji ja e o principal. */}
+        {subtitulo !== titulo ? <Text style={styles.tituloOriginal}>{subtitulo}</Text> : null}
 
         <View style={styles.metadados}>
           {anime.nota !== null ? (
