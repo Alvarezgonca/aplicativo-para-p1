@@ -3,10 +3,12 @@ import { useCallback } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { BarraSuperior } from '@/componentes/barra-superior';
+import { ContinuarAssistindo } from '@/componentes/cartao-continuar';
 import { Carrossel } from '@/componentes/carrossel';
 import { Destaque } from '@/componentes/destaque';
 import { Carregando, MensagemErro } from '@/componentes/estado-tela';
 import { Cores, Espacamento } from '@/constants/tema';
+import { useHistorico } from '@/contextos/historico';
 import { useAlturaBarraAbas } from '@/hooks/use-altura-barra-abas';
 import { useFetch } from '@/hooks/use-fetch';
 import { catalogo } from '@/services/anilist';
@@ -23,6 +25,7 @@ import type { CriterioRanking } from '@/services/tipos';
 export default function TelaInicio() {
   const alturaAbas = useAlturaBarraAbas();
   const router = useRouter();
+  const { registros } = useHistorico();
 
   /** O "Ver tudo" abre o ranking ja no criterio da fileira tocada. */
   function verTudo(criterio: CriterioRanking) {
@@ -70,6 +73,9 @@ export default function TelaInicio() {
           />
         }>
         <Destaque animes={dados.destaques} />
+
+        {/* Vem do historico salvo no aparelho, nao da API. */}
+        <ContinuarAssistindo registros={registros} />
 
         <Carrossel
           titulo="Lançamentos da temporada"

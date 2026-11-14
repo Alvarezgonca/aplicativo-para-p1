@@ -1,17 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { BarraProgresso } from '@/componentes/barra-progresso';
 import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
-import type { Anime } from '@/dados/animes';
-import type { Episodio } from '@/dados/episodios';
+import { FRACAO_CONCLUIDO, type RegistroHistorico } from '@/contextos/historico';
 
-interface Props {
-  anime: Anime;
-  episodio: Episodio;
-}
+/** Quantos episodios a fileira mostra no maximo. */
+const LIMITE_FILEIRA = 10;
 
 /**
  * Cartao horizontal da fileira de continuidade.
@@ -19,9 +16,9 @@ interface Props {
  * Diferente do cartaz vertical, usa a miniatura horizontal do episodio e leva
  * direto para a reproducao, sem passar pela tela de detalhe.
  */
-export function CartaoContinuar({ anime, episodio }: Props) {
+export function CartaoContinuar({ registro }: { registro: RegistroHistorico }) {
   const router = useRouter();
-  const minutosRestantes = Math.max(1, Math.round(episodio.duracao * (1 - episodio.progresso)));
+  const minutosRestantes = Math.max(1, Math.round(registro.duracao * (1 - registro.progresso)));
 
   return (
     <Pressable
@@ -29,12 +26,12 @@ export function CartaoContinuar({ anime, episodio }: Props) {
       onPress={() =>
         router.push({
           pathname: '/player/[animeId]',
-          params: { animeId: anime.id, episodio: episodio.numero },
+          params: { animeId: registro.animeId, episodio: registro.episodio },
         })
       }>
       <View style={styles.moldura}>
         <Image
-          source={episodio.miniatura}
+          source={registro.miniatura ?? registro.banner ?? registro.capa}
           style={styles.imagem}
           contentFit="cover"
           transition={200}
@@ -43,21 +40,74 @@ export function CartaoContinuar({ anime, episodio }: Props) {
           <Ionicons name="play" size={18} color={Cores.texto} />
         </View>
         <View style={styles.progresso}>
-          <BarraProgresso progresso={episodio.progresso} />
+          <BarraProgresso progresso={registro.progresso} />
         </View>
       </View>
 
       <Text style={styles.titulo} numberOfLines={1}>
-        {anime.titulo}
+        {registro.titulo}
       </Text>
       <Text style={styles.detalhe} numberOfLines={1}>
-        E{episodio.numero} · faltam {minutosRestantes} min
+        E{registro.episodio} · faltam {minutosRestantes} min
       </Text>
     </Pressable>
   );
 }
 
+/**
+ * Escolhe o que entra na fileira: o episodio mais recente de cada anime,
+ * desde que ainda nao tenha terminado. Os registros ja chegam do mais novo
+ * para o mais antigo, entao o primeiro de cada anime e o que vale.
+ */
+function emAndamento(registros: RegistroHistorico[]): RegistroHistorico[] {
+  const vistos = new Set<number>();
+  const resultado: RegistroHistorico[] = [];
+  for (const registro of registros) {
+    if (vistos.has(registro.animeId)) {
+      continue;
+    }
+    vistos.add(registro.animeId);
+    if (registro.progresso < FRACAO_CONCLUIDO) {
+      resultado.push(registro);
+    }
+  }
+  return resultado.slice(0, LIMITE_FILEIRA);
+}
+
+/** Fileira "Continuar assistindo" da tela inicial; some quando nao ha nada pela metade. */
+export function ContinuarAssistindo({ registros }: { registros: RegistroHistorico[] }) {
+  const itens = emAndamento(registros);
+  if (itens.length === 0) {
+    return null;
+  }
+
+  return (
+    <View style={styles.secao}>
+      <Text style={styles.tituloSecao}>Continuar assistindo</Text>
+      <FlatList
+        data={itens}
+        keyExtractor={(item) => `${item.animeId}-${item.episodio}`}
+        renderItem={({ item }) => <CartaoContinuar registro={item} />}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.fileira}
+        ItemSeparatorComponent={() => <View style={styles.separador} />}
+      />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  secao: { marginTop: Espacamento.xl },
+  tituloSecao: {
+    color: Cores.texto,
+    fontSize: Fonte.titulo,
+    fontWeight: '700',
+    paddingHorizontal: Espacamento.lg,
+    marginBottom: Espacamento.md,
+  },
+  fileira: { paddingHorizontal: Espacamento.lg },
+  separador: { width: Espacamento.md },
   cartao: { width: 220 },
   pressionado: { opacity: 0.7 },
   moldura: {

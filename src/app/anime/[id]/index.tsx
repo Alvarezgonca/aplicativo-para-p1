@@ -21,11 +21,12 @@ import { Carregando, MensagemErro } from '@/componentes/estado-tela';
 import { LinhaEpisodio } from '@/componentes/linha-episodio';
 import { Selo } from '@/componentes/selo';
 import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
+import { FRACAO_CONCLUIDO, useHistorico, type RegistroHistorico } from '@/contextos/historico';
 import { useMinhaLista } from '@/contextos/minha-lista';
 import { useFetch } from '@/hooks/use-fetch';
 import { catalogo } from '@/services/anilist';
 import { comCache, MINUTO } from '@/services/cache';
-import type { AnimeDetalhe } from '@/services/tipos';
+import type { AnimeDetalhe, Episodio } from '@/services/tipos';
 
 type Aba = 'episodios' | 'sobre';
 
@@ -57,6 +58,30 @@ function montarFicha(anime: AnimeDetalhe): [string, string][] {
 }
 
 /** Botao de voltar sobreposto ao banner, ja que a pilha esconde o cabecalho. */
+/**
+ * Decide o episodio do botao principal a partir do historico deste anime:
+ * o ultimo episodio aberto se ficou pela metade, o seguinte se ele terminou,
+ * ou o primeiro quando o anime ainda nao foi assistido.
+ */
+function sugerirEpisodio(
+  episodios: Episodio[],
+  ultimo: RegistroHistorico | undefined,
+): { episodio: Episodio; continuar: boolean } | null {
+  if (episodios.length === 0) {
+    return null;
+  }
+  const indice = ultimo ? episodios.findIndex((item) => item.numero === ultimo.episodio) : -1;
+  if (ultimo && indice !== -1) {
+    if (ultimo.progresso < FRACAO_CONCLUIDO) {
+      return { episodio: episodios[indice], continuar: true };
+    }
+    if (episodios[indice + 1]) {
+      return { episodio: episodios[indice + 1], continuar: false };
+    }
+  }
+  return { episodio: episodios[0], continuar: false };
+}
+
 function BotaoVoltar() {
   const router = useRouter();
   const recuo = useSafeAreaInsets();
@@ -86,6 +111,7 @@ export default function TelaDetalhe() {
   const recuo = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const { estaSalvo, alternar } = useMinhaLista();
+  const { registros, progressoDe } = useHistorico();
   const [sinopseExpandida, setSinopseExpandida] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState<Aba>('episodios');
   const [agora] = useState(() => Date.now());
@@ -116,7 +142,10 @@ export default function TelaDetalhe() {
   }
 
   const salvo = estaSalvo(anime.id);
-  const primeiro = anime.episodios[0];
+  const sugerido = sugerirEpisodio(
+    anime.episodios,
+    registros.find((item) => item.animeId === anime.id),
+  );
 
   /**
    * Abre o trailer no navegador interno do aparelho (expo-web-browser). O
@@ -195,12 +224,14 @@ export default function TelaDetalhe() {
           </View>
         ) : null}
 
-        {primeiro ? (
+        {sugerido ? (
           <Pressable
             style={({ pressed }) => [styles.botaoAssistir, pressed && styles.pressionado]}
-            onPress={() => abrirEpisodio(primeiro.numero)}>
+            onPress={() => abrirEpisodio(sugerido.episodio.numero)}>
             <Ionicons name="play" size={18} color={Cores.texto} />
-            <Text style={styles.textoAssistir}>Assistir E{primeiro.numero}</Text>
+            <Text style={styles.textoAssistir}>
+              {sugerido.continuar ? 'Continuar' : 'Assistir'} E{sugerido.episodio.numero}
+            </Text>
           </Pressable>
         ) : null}
 
@@ -318,6 +349,7 @@ export default function TelaDetalhe() {
             <LinhaEpisodio
               episodio={item}
               duracao={anime.duracao}
+              progresso={progressoDe(anime.id, item.numero)}
               aoPressionar={() => abrirEpisodio(item.numero)}
             />
           </View>
