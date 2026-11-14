@@ -8,6 +8,7 @@ import { AvisoOffline } from '@/componentes/aviso-offline';
 import { Cores } from '@/constants/tema';
 import { ProvedorHistorico } from '@/contextos/historico';
 import { ProvedorMinhaLista } from '@/contextos/minha-lista';
+import { ProvedorPreferencias } from '@/contextos/preferencias';
 import { ProvedorSessao, useSessao } from '@/contextos/sessao';
 
 // Mantem a tela de abertura nativa visivel ate a sessao salva ser lida.
@@ -59,19 +60,22 @@ function Navegacao() {
  * aplicativo inteiro. As metricas iniciais vem das constantes nativas de forma
  * sincrona, entao a arvore e montada ja na primeira passagem.
  *
- * Os provedores de contexto ficam aqui para valerem em todas as telas. A
- * sessao e o mais externo porque os demais dependem de quem esta logado.
+ * Os provedores de contexto ficam aqui para valerem em todas as telas. As
+ * preferencias sao do aparelho e valem ate no login; a sessao vem logo
+ * depois porque a lista e o historico dependem de quem esta logado.
  */
 export default function LayoutRaiz() {
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-      <ProvedorSessao>
-        <ProvedorMinhaLista>
-          <ProvedorHistorico>
-            <Navegacao />
-          </ProvedorHistorico>
-        </ProvedorMinhaLista>
-      </ProvedorSessao>
+      <ProvedorPreferencias>
+        <ProvedorSessao>
+          <ProvedorMinhaLista>
+            <ProvedorHistorico>
+              <Navegacao />
+            </ProvedorHistorico>
+          </ProvedorMinhaLista>
+        </ProvedorSessao>
+      </ProvedorPreferencias>
     </SafeAreaProvider>
   );
 }
