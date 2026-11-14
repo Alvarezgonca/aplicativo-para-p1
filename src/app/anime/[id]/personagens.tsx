@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
-import { useLocalSearchParams } from 'expo-router';
+import { Link, useLocalSearchParams } from 'expo-router';
 import { useCallback } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CabecalhoTela } from '@/componentes/cabecalho-tela';
@@ -17,20 +17,31 @@ const idDoPersonagem = (personagem: PersonagemResumo) => personagem.id;
 
 function LinhaPersonagem({ personagem }: { personagem: PersonagemResumo }) {
   return (
-    <View style={styles.linha}>
-      <Image source={personagem.imagem} style={styles.foto} contentFit="cover" transition={200} />
-      <View style={styles.informacoes}>
-        <Text style={styles.nome} numberOfLines={1}>
-          {personagem.nome}
-        </Text>
-        <Text style={styles.papel}>{personagem.papel}</Text>
-        {personagem.dublador ? (
-          <Text style={styles.dublador} numberOfLines={1}>
-            Voz original: {personagem.dublador}
-          </Text>
-        ) : null}
-      </View>
-    </View>
+    <Link href={{ pathname: '/personagem/[id]', params: { id: personagem.id } }} asChild>
+      <Pressable>
+        {({ pressed }) => (
+          <View style={[styles.linha, pressed && styles.pressionado]}>
+            <Image
+              source={personagem.imagem}
+              style={styles.foto}
+              contentFit="cover"
+              transition={200}
+            />
+            <View style={styles.informacoes}>
+              <Text style={styles.nome} numberOfLines={1}>
+                {personagem.nome}
+              </Text>
+              <Text style={styles.papel}>{personagem.papel}</Text>
+              {personagem.dublador ? (
+                <Text style={styles.dublador} numberOfLines={1}>
+                  Voz original: {personagem.dublador}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+        )}
+      </Pressable>
+    </Link>
   );
 }
 
@@ -111,6 +122,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Espacamento.lg,
     paddingVertical: Espacamento.md,
   },
+  pressionado: { opacity: 0.6 },
   foto: {
     width: 56,
     height: 56,

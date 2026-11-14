@@ -248,7 +248,12 @@ export default function TelaDetalhe() {
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.fileira}>
                   {anime.personagens.map((personagem) => (
-                    <View key={personagem.id} style={styles.personagem}>
+                    <Pressable
+                      key={personagem.id}
+                      style={styles.personagem}
+                      onPress={() =>
+                        router.push({ pathname: '/personagem/[id]', params: { id: personagem.id } })
+                      }>
                       <Image
                         source={personagem.imagem}
                         style={styles.fotoPersonagem}
@@ -259,7 +264,7 @@ export default function TelaDetalhe() {
                         {personagem.nome}
                       </Text>
                       <Text style={styles.papelPersonagem}>{personagem.papel}</Text>
-                    </View>
+                    </Pressable>
                   ))}
                 </ScrollView>
               </View>
