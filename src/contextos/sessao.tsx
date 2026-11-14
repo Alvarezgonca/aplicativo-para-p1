@@ -82,11 +82,14 @@ export function ProvedorSessao({ children }: { children: ReactNode }) {
     await seguro.set(CHAVE_TOKEN, resultado.token);
     await storage.set(CHAVE_SESSAO, resultado.usuario);
     await storage.set(CHAVE_ULTIMO_USUARIO, resultado.usuario.usuario);
+    // Quem ja entrou uma vez nao precisa ver a apresentacao de novo.
+    await storage.set(CHAVE_BOAS_VINDAS, true);
     setEstado((atual) => ({
       ...atual,
       usuario: resultado.usuario,
       token: resultado.token,
       ultimoUsuario: resultado.usuario.usuario,
+      boasVindasVista: true,
     }));
   }, []);
 

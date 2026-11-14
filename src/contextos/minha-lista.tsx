@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 
+import { useSessao } from '@/contextos/sessao';
 import { storage } from '@/services/storage';
 import type { AnimeResumo } from '@/services/tipos';
 
@@ -28,7 +29,10 @@ interface ValorContexto {
 
 const Contexto = createContext<ValorContexto | undefined>(undefined);
 
-/** Chave no armazenamento local (o servico de storage acrescenta o prefixo). */
+/**
+ * Inicio da chave no armazenamento local. O id do usuario e acrescentado no
+ * fim, entao cada conta que entra neste aparelho tem a propria lista.
+ */
 const CHAVE = 'minha-lista';
 
 /**
@@ -64,25 +68,59 @@ function resumir(anime: AnimeResumo): AnimeResumo {
  *
  * Os dados do anime sao gravados junto com o identificador, e nao so o
  * identificador: assim a lista abre na hora e funciona mesmo sem internet.
+ *
+ * A lista pertence ao usuario logado. Quando a sessao muda (entrar, sair ou
+ * trocar de conta), a chave muda e a lista do novo dono e lida do disco.
  */
 export function ProvedorMinhaLista({ children }: { children: ReactNode }) {
-  const [itens, setItens] = useState<ItemLista[]>([]);
-  const [carregado, setCarregado] = useState(false);
+  const { usuario } = useSessao();
+  const chave = usuario ? `${CHAVE}:${usuario.id}` : null;
 
-  /** Le a lista gravada uma unica vez, na montagem do provedor. */
+  // O estado guarda de qual chave veio a lista: enquanto a lista do novo
+  // dono nao chega, a do dono anterior nao e exibida.
+  const [estado, setEstado] = useState<{ chave: string | null; itens: ItemLista[] }>({
+    chave: null,
+    itens: [],
+  });
+
   useEffect(() => {
-    storage.get<ItemLista[]>(CHAVE, []).then((lidos) => {
+    if (!chave) {
+      return;
+    }
+    let ativo = true;
+    storage.get<ItemLista[]>(chave, []).then((lidos) => {
+      if (!ativo) {
+        return;
+      }
       // O conteudo vem do disco e pode estar num formato antigo.
-      setItens(Array.isArray(lidos) ? lidos.filter((item) => typeof item?.id === 'number') : []);
-      setCarregado(true);
+      const validos = Array.isArray(lidos)
+        ? lidos.filter((item) => typeof item?.id === 'number')
+        : [];
+      setEstado({ chave, itens: validos });
     });
-  }, []);
+    // Se a sessao mudar antes da leitura terminar, a resposta antiga e ignorada.
+    return () => {
+      ativo = false;
+    };
+  }, [chave]);
+
+  const carregado = chave === null || estado.chave === chave;
+  const itens = useMemo(
+    () => (chave !== null && estado.chave === chave ? estado.itens : []),
+    [chave, estado],
+  );
 
   /** Atualiza a memoria e grava a nova lista no aparelho. */
-  const salvarLista = useCallback((novos: ItemLista[]) => {
-    setItens(novos);
-    storage.set(CHAVE, novos);
-  }, []);
+  const salvarLista = useCallback(
+    (novos: ItemLista[]) => {
+      if (!chave) {
+        return;
+      }
+      setEstado({ chave, itens: novos });
+      storage.set(chave, novos);
+    },
+    [chave],
+  );
 
   const alternar = useCallback(
     (anime: AnimeResumo) => {
