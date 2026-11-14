@@ -11,7 +11,7 @@ const abas: { nome: string; rotulo: string; icone: NomeIcone }[] = [
   { nome: 'index', rotulo: 'Início', icone: 'home' },
   { nome: 'busca', rotulo: 'Buscar', icone: 'search' },
   { nome: 'simulcast', rotulo: 'Simulcast', icone: 'calendar' },
-  { nome: 'lista', rotulo: 'Minha lista', icone: 'bookmark' },
+  { nome: 'lista', rotulo: 'Lista', icone: 'bookmark' },
   { nome: 'perfil', rotulo: 'Perfil', icone: 'person' },
 ];
 
