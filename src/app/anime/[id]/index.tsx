@@ -3,7 +3,15 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import {
+  FlatList,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Carregando, MensagemErro } from '@/componentes/estado-tela';
@@ -222,6 +230,40 @@ export default function TelaDetalhe() {
                 <Text style={styles.fichaValor}>{valor}</Text>
               </View>
             ))}
+
+            {anime.personagens.length > 0 ? (
+              <View style={styles.secao}>
+                <View style={styles.cabecalhoSecao}>
+                  <Text style={styles.tituloSecao}>Personagens</Text>
+                  <Pressable
+                    hitSlop={8}
+                    onPress={() =>
+                      router.push({ pathname: '/anime/[id]/personagens', params: { id: animeId } })
+                    }>
+                    <Text style={styles.verTodos}>Ver todos</Text>
+                  </Pressable>
+                </View>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.fileira}>
+                  {anime.personagens.map((personagem) => (
+                    <View key={personagem.id} style={styles.personagem}>
+                      <Image
+                        source={personagem.imagem}
+                        style={styles.fotoPersonagem}
+                        contentFit="cover"
+                        transition={200}
+                      />
+                      <Text style={styles.nomePersonagem} numberOfLines={2}>
+                        {personagem.nome}
+                      </Text>
+                      <Text style={styles.papelPersonagem}>{personagem.papel}</Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            ) : null}
           </View>
         ) : anime.episodios.length === 0 ? (
           <Text style={styles.semEpisodios}>Nenhum episódio exibido até agora.</Text>
@@ -357,6 +399,31 @@ const styles = StyleSheet.create({
   },
   textoAbaAtiva: { color: Cores.texto },
   sobre: { paddingBottom: Espacamento.lg },
+  secao: { marginTop: Espacamento.xl },
+  cabecalhoSecao: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Espacamento.md,
+  },
+  tituloSecao: { color: Cores.texto, fontSize: Fonte.titulo, fontWeight: '700' },
+  verTodos: { color: Cores.marca, fontSize: Fonte.pequena, fontWeight: '700' },
+  fileira: { gap: Espacamento.md },
+  personagem: { width: 84, alignItems: 'center' },
+  fotoPersonagem: {
+    width: 72,
+    height: 72,
+    borderRadius: Raio.pilula,
+    backgroundColor: Cores.superficie,
+  },
+  nomePersonagem: {
+    color: Cores.texto,
+    fontSize: Fonte.minuscula,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginTop: Espacamento.sm,
+  },
+  papelPersonagem: { color: Cores.textoTerciario, fontSize: 10, marginTop: 2 },
   ficha: {
     flexDirection: 'row',
     justifyContent: 'space-between',
