@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -10,6 +11,7 @@ import { useAlturaBarraAbas } from '@/hooks/use-altura-barra-abas';
 import { useFetch } from '@/hooks/use-fetch';
 import { catalogo } from '@/services/anilist';
 import { comCache, MINUTO } from '@/services/cache';
+import type { CriterioRanking } from '@/services/tipos';
 
 /**
  * Tela inicial.
@@ -20,6 +22,12 @@ import { comCache, MINUTO } from '@/services/cache';
  */
 export default function TelaInicio() {
   const alturaAbas = useAlturaBarraAbas();
+  const router = useRouter();
+
+  /** O "Ver tudo" abre o ranking ja no criterio da fileira tocada. */
+  function verTudo(criterio: CriterioRanking) {
+    router.push({ pathname: '/ranking', params: { criterio } });
+  }
 
   const buscarInicio = useCallback(
     (forcar: boolean) => comCache('inicio', catalogo.inicio, 30 * MINUTO, forcar),
@@ -63,9 +71,21 @@ export default function TelaInicio() {
         }>
         <Destaque animes={dados.destaques} />
 
-        <Carrossel titulo="Lançamentos da temporada" animes={dados.temporada} />
-        <Carrossel titulo="Mais populares" animes={dados.populares} />
-        <Carrossel titulo="Mais bem avaliados" animes={dados.melhores} />
+        <Carrossel
+          titulo="Lançamentos da temporada"
+          animes={dados.temporada}
+          aoVerTudo={() => verTudo('temporada')}
+        />
+        <Carrossel
+          titulo="Mais populares"
+          animes={dados.populares}
+          aoVerTudo={() => verTudo('populares')}
+        />
+        <Carrossel
+          titulo="Mais bem avaliados"
+          animes={dados.melhores}
+          aoVerTudo={() => verTudo('melhores')}
+        />
       </ScrollView>
     </View>
   );

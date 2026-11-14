@@ -64,7 +64,39 @@ export function Vazio({ titulo, texto, icone = 'file-tray-outline' }: PropsVazio
   );
 }
 
+interface PropsRodape {
+  carregando: boolean;
+  erro: string | null;
+  aoTentarDeNovo: () => void;
+}
+
+/**
+ * Rodape das listas paginadas: indicador enquanto a proxima pagina chega e,
+ * se ela falhar, um aviso com a opcao de tentar de novo sem perder o que ja
+ * foi carregado.
+ */
+export function RodapePaginacao({ carregando, erro, aoTentarDeNovo }: PropsRodape) {
+  if (carregando) {
+    return (
+      <View style={styles.rodape}>
+        <ActivityIndicator color={Cores.marca} />
+      </View>
+    );
+  }
+  if (erro) {
+    return (
+      <Pressable style={styles.rodape} onPress={aoTentarDeNovo}>
+        <Text style={styles.texto}>{erro}</Text>
+        <Text style={styles.link}>Tocar para tentar de novo</Text>
+      </Pressable>
+    );
+  }
+  return null;
+}
+
 const styles = StyleSheet.create({
+  rodape: { paddingVertical: Espacamento.xl, alignItems: 'center', gap: Espacamento.xs },
+  link: { color: Cores.marca, fontSize: Fonte.pequena, fontWeight: '700' },
   centro: {
     flex: 1,
     alignItems: 'center',
