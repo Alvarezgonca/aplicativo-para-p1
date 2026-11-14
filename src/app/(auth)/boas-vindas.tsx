@@ -15,7 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
-import { storage } from '@/services/storage';
+import { useSessao } from '@/contextos/sessao';
 
 type NomeIcone = keyof typeof Ionicons.glyphMap;
 
@@ -54,6 +54,7 @@ const PAGINAS: Pagina[] = [
  */
 export default function TelaBoasVindas() {
   const router = useRouter();
+  const { concluirBoasVindas } = useSessao();
   const recuo = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const lista = useRef<FlatList<Pagina>>(null);
@@ -69,7 +70,7 @@ export default function TelaBoasVindas() {
   }
 
   async function concluir() {
-    await storage.set('boas-vindas-vista', true);
+    await concluirBoasVindas();
     router.replace('/');
   }
 
