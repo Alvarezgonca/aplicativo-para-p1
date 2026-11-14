@@ -71,7 +71,7 @@ export default function TelaBoasVindas() {
 
   async function concluir() {
     await concluirBoasVindas();
-    router.replace('/');
+    router.replace('/entrar');
   }
 
   function avancar() {
