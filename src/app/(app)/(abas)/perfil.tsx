@@ -39,6 +39,7 @@ const ATALHOS: Atalho[] = [
   { icone: 'bookmark-outline', rotulo: 'Minha lista', destino: '/lista' },
   { icone: 'calendar-outline', rotulo: 'Lançamentos da semana', destino: '/simulcast' },
   { icone: 'trophy-outline', rotulo: 'Ranking', destino: '/ranking' },
+  { icone: 'information-circle-outline', rotulo: 'Sobre o aplicativo', destino: '/sobre' },
 ];
 
 /** Minutos em texto curto: "45 min" ou "3,5 h". */
