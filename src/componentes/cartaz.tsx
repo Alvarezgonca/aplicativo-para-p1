@@ -54,50 +54,50 @@ export function Cartaz({
   progresso,
 }: Props) {
   return (
-    <Link href={{ pathname: '/anime/[id]', params: { id: anime.id } }} asChild>
-      <Pressable style={({ pressed }) => [{ width: largura }, pressed && styles.pressionado]}>
-        <View
-          style={[
-            styles.moldura,
-            { height: largura * 1.45 },
-            anime.cor ? { backgroundColor: anime.cor } : null,
-          ]}>
-          <Image
-            source={anime.capa}
-            style={styles.imagem}
-            contentFit="cover"
-            transition={200}
-          />
-          {anime.dublado ? (
-            <View style={styles.etiquetaDublado}>
-              <Text style={styles.textoDublado}>DUB</Text>
-            </View>
-          ) : null}
+    // A largura fica numa View externa: com Link asChild, o estilo em forma de
+    // funcao do Pressable nao chega ao elemento na versao web, e o cartaz
+    // passava a ter a largura do proprio titulo.
+    <View style={{ width: largura }}>
+      <Link href={{ pathname: '/anime/[id]', params: { id: anime.id } }} asChild>
+        <Pressable style={({ pressed }) => pressed && styles.pressionado}>
+          <View
+            style={[
+              styles.moldura,
+              { height: largura * 1.45 },
+              anime.cor ? { backgroundColor: anime.cor } : null,
+            ]}>
+            <Image source={anime.capa} style={styles.imagem} contentFit="cover" transition={200} />
+            {anime.dublado ? (
+              <View style={styles.etiquetaDublado}>
+                <Text style={styles.textoDublado}>DUB</Text>
+              </View>
+            ) : null}
 
-          {progresso !== undefined && progresso > 0 ? (
-            <View style={styles.progresso}>
-              <BarraProgresso progresso={progresso} />
-            </View>
-          ) : null}
-        </View>
-
-        {mostrarLegenda ? (
-          <View style={styles.legenda}>
-            {/* A altura minima reserva sempre duas linhas: sem isso, cartazes
-                de titulo curto ficam mais baixos e a base da grade serrilha. */}
-            <Text style={styles.titulo} numberOfLines={2}>
-              {anime.titulo}
-            </Text>
-            {mostrarNota && anime.nota !== null ? (
-              <View style={styles.linhaNota}>
-                <Ionicons name="star" size={11} color={Cores.dourado} />
-                <Text style={styles.nota}>{anime.nota.toFixed(1)}</Text>
+            {progresso !== undefined && progresso > 0 ? (
+              <View style={styles.progresso}>
+                <BarraProgresso progresso={progresso} />
               </View>
             ) : null}
           </View>
-        ) : null}
-      </Pressable>
-    </Link>
+
+          {mostrarLegenda ? (
+            <View style={styles.legenda}>
+              {/* A altura minima reserva sempre duas linhas: sem isso, cartazes
+                de titulo curto ficam mais baixos e a base da grade serrilha. */}
+              <Text style={styles.titulo} numberOfLines={2}>
+                {anime.titulo}
+              </Text>
+              {mostrarNota && anime.nota !== null ? (
+                <View style={styles.linhaNota}>
+                  <Ionicons name="star" size={11} color={Cores.dourado} />
+                  <Text style={styles.nota}>{anime.nota.toFixed(1)}</Text>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+        </Pressable>
+      </Link>
+    </View>
   );
 }
 

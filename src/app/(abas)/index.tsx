@@ -1,53 +1,71 @@
-import { FlatList, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback } from 'react';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { BarraSuperior } from '@/componentes/barra-superior';
 import { Carrossel } from '@/componentes/carrossel';
-import { CartaoContinuar } from '@/componentes/cartao-continuar';
 import { Destaque } from '@/componentes/destaque';
-import { Cores, Espacamento, Fonte } from '@/constants/tema';
+import { Carregando, MensagemErro } from '@/componentes/estado-tela';
+import { Cores, Espacamento } from '@/constants/tema';
 import { useAlturaBarraAbas } from '@/hooks/use-altura-barra-abas';
-import { animes, animesEmDestaque } from '@/dados/animes';
-import { colecoes } from '@/dados/colecoes';
-import { proximoEpisodio } from '@/dados/episodios';
+import { useFetch } from '@/hooks/use-fetch';
+import { catalogo } from '@/services/anilist';
+import { comCache, MINUTO } from '@/services/cache';
 
 /**
- * Itens da fileira de continuidade: para cada anime em andamento, o primeiro
- * episodio ainda nao concluido. O calculo e feito uma unica vez, fora do
- * componente, por depender apenas de dados estaticos.
+ * Tela inicial.
+ *
+ * As quatro fileiras chegam da API em uma unica requisicao e ficam 30 minutos
+ * no cache: ao voltar para a aba, a tela aparece na hora, sem nova consulta.
+ * Puxar a lista para baixo ignora o cache e busca tudo de novo.
  */
-const emAndamento = animes.filter((anime) => anime.destaque).flatMap((anime) => {
-  const episodio = proximoEpisodio(anime);
-  return episodio ? [{ anime, episodio }] : [];
-});
-
 export default function TelaInicio() {
   const alturaAbas = useAlturaBarraAbas();
+
+  const buscarInicio = useCallback(
+    (forcar: boolean) => comCache('inicio', catalogo.inicio, 30 * MINUTO, forcar),
+    [],
+  );
+  const { dados, loading, erro, atualizando, recarregar, atualizar } = useFetch(buscarInicio);
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <BarraSuperior />
+        <Carregando mensagem="Carregando o catálogo..." />
+      </View>
+    );
+  }
+
+  if (erro || !dados) {
+    return (
+      <View style={styles.container}>
+        <BarraSuperior />
+        <MensagemErro mensagem={erro ?? 'Catálogo indisponível.'} aoTentarDeNovo={recarregar} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <BarraSuperior sobreposta />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: alturaAbas + Espacamento.xl }}>
-        <Destaque animes={animesEmDestaque} />
-
-        <View style={styles.secaoContinuar}>
-          <Text style={styles.tituloSecao}>Continuar assistindo</Text>
-          <FlatList
-            data={emAndamento}
-            keyExtractor={(item) => item.episodio.id}
-            renderItem={({ item }) => (
-              <CartaoContinuar anime={item.anime} episodio={item.episodio} />
-            )}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.fileira}
-            ItemSeparatorComponent={() => <View style={styles.separador} />}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: alturaAbas + Espacamento.xl }}
+        refreshControl={
+          <RefreshControl
+            refreshing={atualizando}
+            onRefresh={atualizar}
+            tintColor={Cores.marca}
+            colors={[Cores.marca]}
+            progressBackgroundColor={Cores.superficie}
           />
-        </View>
+        }>
+        <Destaque animes={dados.destaques} />
 
-        {colecoes.map((colecao) => (
-          <Carrossel key={colecao.id} titulo={colecao.titulo} animes={colecao.animes} />
-        ))}
+        <Carrossel titulo="Lançamentos da temporada" animes={dados.temporada} />
+        <Carrossel titulo="Mais populares" animes={dados.populares} />
+        <Carrossel titulo="Mais bem avaliados" animes={dados.melhores} />
       </ScrollView>
     </View>
   );
@@ -55,14 +73,4 @@ export default function TelaInicio() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Cores.fundo },
-  secaoContinuar: { marginTop: Espacamento.lg },
-  tituloSecao: {
-    color: Cores.texto,
-    fontSize: Fonte.titulo,
-    fontWeight: '700',
-    paddingHorizontal: Espacamento.lg,
-    marginBottom: Espacamento.md,
-  },
-  fileira: { paddingHorizontal: Espacamento.lg },
-  separador: { width: Espacamento.md },
 });
