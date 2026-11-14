@@ -46,11 +46,11 @@ export default function LayoutAbas() {
           name={aba.nome}
           options={{
             title: aba.rotulo,
-            tabBarIcon: ({ color, focused }) => (
+            tabBarIcon: ({ focused }) => (
               <Ionicons
                 name={focused ? aba.icone : (`${aba.icone}-outline` as NomeIcone)}
                 size={22}
-                color={color}
+                color={focused ? Cores.marca : Cores.textoTerciario}
               />
             ),
           }}

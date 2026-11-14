@@ -69,7 +69,7 @@ export default function TelaLista() {
                 </View>
               </View>
             </View>
-          ) : null
+          ) : undefined
         }
         ListEmptyComponent={
           <View style={styles.vazio}>
