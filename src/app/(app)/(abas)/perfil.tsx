@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import {
@@ -21,9 +20,9 @@ import { useMinhaLista } from '@/contextos/minha-lista';
 import { useSessao } from '@/contextos/sessao';
 import { useAlturaBarraAbas } from '@/hooks/use-altura-barra-abas';
 import { useFetch } from '@/hooks/use-fetch';
-import { ErroApi } from '@/services/api';
-import { buscarPerfil, type Perfil } from '@/services/autenticacao';
+import type { Usuario } from '@/services/autenticacao';
 import { comCache, MINUTO } from '@/services/cache';
+import { buscarConta } from '@/services/conta';
 
 type NomeIcone = keyof typeof Ionicons.glyphMap;
 
@@ -50,56 +49,45 @@ function formatarTempo(minutos: number): string {
   return `${(minutos / 60).toFixed(1).replace('.', ',')} h`;
 }
 
-/** Linhas da ficha da conta, so com o que a API devolveu. */
-function montarDetalhes(perfil: Perfil): [string, string][] {
-  const linhas: [string, string][] = [['Usuário', perfil.usuario]];
-  if (perfil.idade) linhas.push(['Idade', `${perfil.idade} anos`]);
-  if (perfil.nascimento) {
-    const [ano, mes, dia] = perfil.nascimento.split('-');
-    linhas.push(['Nascimento', `${dia.padStart(2, '0')}/${mes.padStart(2, '0')}/${ano}`]);
-  }
-  const local = [perfil.cidade, perfil.pais].filter(Boolean).join(', ');
-  if (local) linhas.push(['Local', local]);
-  if (perfil.telefone) linhas.push(['Telefone', perfil.telefone]);
-  return linhas;
+/** Linhas da ficha da conta, com o que o servidor devolveu. */
+function montarDetalhes(conta: Usuario): [string, string][] {
+  const criadaEm = new Date(conta.criadoEm).toLocaleDateString('pt-BR');
+  return [
+    ['Nome', conta.nome],
+    ['E-mail', conta.email],
+    ['Conta criada em', criadaEm],
+  ];
+}
+
+/** Iniciais do nome para o avatar: "Ana Clara Souza" vira "AS". */
+function iniciaisDe(nome: string): string {
+  const partes = nome.trim().split(/\s+/);
+  const primeira = partes[0]?.[0] ?? '';
+  const ultima = partes.length > 1 ? (partes[partes.length - 1]?.[0] ?? '') : '';
+  return `${primeira}${ultima}`.toUpperCase();
 }
 
 /**
  * Perfil do usuario logado.
  *
  * O topo usa o que ja esta salvo na sessao, entao aparece na hora. A ficha
- * da conta vem do GET /auth/me, que exige o token no cabecalho; se a API
- * responder 401 (token vencido), a sessao e encerrada e o layout protegido
- * leva o usuario de volta ao login. As estatisticas sao calculadas a partir
- * da lista e do historico guardados no aparelho.
+ * da conta vem do GET /usuarios/eu da API do aplicativo, que exige o token
+ * no cabecalho; o cliente da API renova o token sozinho e, se a sessao tiver
+ * acabado no servidor, o layout protegido leva o usuario de volta ao login.
+ * As estatisticas sao calculadas a partir da lista e do historico.
  */
 export default function TelaPerfil() {
   const router = useRouter();
   const alturaAbas = useAlturaBarraAbas();
-  const { usuario, token, sair } = useSessao();
+  const { usuario, sair } = useSessao();
   const { itens: salvos } = useMinhaLista();
   const { registros } = useHistorico();
 
   const buscar = useCallback(
-    (forcar: boolean) =>
-      comCache(
-        `perfil:${usuario?.id ?? 0}`,
-        async () => {
-          try {
-            return await buscarPerfil(token ?? '');
-          } catch (erro) {
-            if (erro instanceof ErroApi && erro.status === 401) {
-              sair();
-            }
-            throw erro;
-          }
-        },
-        30 * MINUTO,
-        forcar,
-      ),
-    [usuario?.id, token, sair],
+    (forcar: boolean) => comCache(`conta:${usuario?.id ?? ''}`, buscarConta, 30 * MINUTO, forcar),
+    [usuario?.id],
   );
-  const { dados: perfil, loading, erro, atualizando, recarregar, atualizar } = useFetch(buscar);
+  const { dados: conta, loading, erro, atualizando, recarregar, atualizar } = useFetch(buscar);
 
   const estatisticas = useMemo(() => {
     const minutos = registros.reduce((total, item) => total + item.duracao * item.progresso, 0);
@@ -129,7 +117,7 @@ export default function TelaPerfil() {
     return null;
   }
 
-  const iniciais = `${usuario.nome[0] ?? ''}${usuario.sobrenome[0] ?? ''}`.toUpperCase();
+  const iniciais = iniciaisDe(usuario.nome);
 
   return (
     <View style={styles.container}>
@@ -149,16 +137,14 @@ export default function TelaPerfil() {
         <View style={styles.identificacao}>
           <View style={styles.avatar}>
             <Text style={styles.iniciais}>{iniciais}</Text>
-            <Image source={usuario.foto} style={styles.foto} contentFit="cover" transition={200} />
           </View>
           <View style={styles.dados}>
-            <Text style={styles.nome}>
-              {usuario.nome} {usuario.sobrenome}
+            <Text style={styles.nome} numberOfLines={1}>
+              {usuario.nome}
             </Text>
             <Text style={styles.email} numberOfLines={1}>
               {usuario.email}
             </Text>
-            <Text style={styles.arroba}>@{usuario.usuario}</Text>
           </View>
         </View>
 
@@ -177,13 +163,13 @@ export default function TelaPerfil() {
             <View style={styles.estadoFicha}>
               <ActivityIndicator color={Cores.marca} />
             </View>
-          ) : erro || !perfil ? (
+          ) : erro || !conta ? (
             <Pressable style={styles.estadoFicha} onPress={recarregar}>
               <Text style={styles.textoEstado}>{erro ?? 'Dados indisponíveis.'}</Text>
               <Text style={styles.link}>Tocar para tentar de novo</Text>
             </Pressable>
           ) : (
-            montarDetalhes(perfil).map(([rotulo, valor], indice) => (
+            montarDetalhes(conta).map(([rotulo, valor], indice) => (
               <View key={rotulo}>
                 {indice > 0 ? <View style={styles.divisoria} /> : null}
                 <View style={styles.linha}>
@@ -236,13 +222,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   iniciais: { color: Cores.texto, fontSize: Fonte.destaque, fontWeight: '800' },
-  // A foto fica por cima das iniciais; enquanto carrega (ou se falhar), as
-  // iniciais aparecem no lugar.
-  foto: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   dados: { flex: 1, gap: 2 },
   nome: { color: Cores.texto, fontSize: Fonte.titulo, fontWeight: '700' },
   email: { color: Cores.textoSecundario, fontSize: Fonte.pequena },
-  arroba: { color: Cores.marca, fontSize: Fonte.pequena, fontWeight: '600' },
   estatisticas: {
     flexDirection: 'row',
     backgroundColor: Cores.superficie,

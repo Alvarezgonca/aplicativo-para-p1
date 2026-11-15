@@ -20,13 +20,16 @@ import { useSessao } from '@/contextos/sessao';
 import { mensagemDeErro } from '@/services/api';
 import { CONTA_DEMONSTRACAO } from '@/services/autenticacao';
 
+/** Formato basico de e-mail: algo@algo.algo, sem espacos. */
+const FORMATO_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 /** Confere os campos antes de gastar uma requisicao. Devolve o erro ou null. */
-function validar(usuario: string, senha: string): string | null {
-  if (usuario.trim().length < 3) {
-    return 'Informe o usuário (mínimo de 3 letras).';
+function validar(email: string, senha: string): string | null {
+  if (!FORMATO_EMAIL.test(email.trim())) {
+    return 'Informe um e-mail válido.';
   }
-  if (senha.length < 6) {
-    return 'A senha precisa ter pelo menos 6 caracteres.';
+  if (!senha) {
+    return 'Informe a senha.';
   }
   return null;
 }
@@ -41,17 +44,17 @@ function validar(usuario: string, senha: string): string | null {
 export default function TelaEntrar() {
   const router = useRouter();
   const recuo = useSafeAreaInsets();
-  const { entrar, ultimoUsuario } = useSessao();
+  const { entrar, ultimoEmail } = useSessao();
 
-  const [usuario, setUsuario] = useState(ultimoUsuario);
+  const [email, setEmail] = useState(ultimoEmail);
   const [senha, setSenha] = useState('');
   const [senhaVisivel, setSenhaVisivel] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const campoSenha = useRef<ComponentRef<typeof TextInput>>(null);
 
-  async function enviar(nome = usuario, segredo = senha) {
-    const problema = validar(nome, segredo);
+  async function enviar(endereco = email, segredo = senha) {
+    const problema = validar(endereco, segredo);
     if (problema) {
       setErro(problema);
       return;
@@ -60,7 +63,7 @@ export default function TelaEntrar() {
     setErro(null);
     setEnviando(true);
     try {
-      await entrar(nome, segredo);
+      await entrar(endereco, segredo);
       // replace: depois de logado, o voltar nao deve trazer o login de volta.
       router.replace('/');
     } catch (falha) {
@@ -70,9 +73,9 @@ export default function TelaEntrar() {
   }
 
   function usarDemonstracao() {
-    setUsuario(CONTA_DEMONSTRACAO.usuario);
+    setEmail(CONTA_DEMONSTRACAO.email);
     setSenha(CONTA_DEMONSTRACAO.senha);
-    enviar(CONTA_DEMONSTRACAO.usuario, CONTA_DEMONSTRACAO.senha);
+    enviar(CONTA_DEMONSTRACAO.email, CONTA_DEMONSTRACAO.senha);
   }
 
   return (
@@ -97,23 +100,24 @@ export default function TelaEntrar() {
         </Text>
 
         <View style={styles.formulario}>
-          <Text style={styles.rotulo}>Usuário</Text>
+          <Text style={styles.rotulo}>E-mail</Text>
           <View style={styles.campo}>
-            <Ionicons name="person-outline" size={18} color={Cores.textoTerciario} />
+            <Ionicons name="mail-outline" size={18} color={Cores.textoTerciario} />
             <TextInput
               style={styles.entrada}
-              value={usuario}
-              onChangeText={setUsuario}
-              placeholder="seu usuário"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="seu@email.com"
               placeholderTextColor={Cores.textoTerciario}
+              keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
-              autoComplete="username"
-              textContentType="username"
+              autoComplete="email"
+              textContentType="emailAddress"
               returnKeyType="next"
               editable={!enviando}
               onSubmitEditing={() => campoSenha.current?.focus()}
-              accessibilityLabel="Usuário"
+              accessibilityLabel="E-mail"
             />
           </View>
 
@@ -183,8 +187,7 @@ export default function TelaEntrar() {
             <Text style={styles.textoSecundario}>Usar conta de demonstração</Text>
           </Pressable>
           <Text style={styles.dica}>
-            Conta de teste da API DummyJSON: {CONTA_DEMONSTRACAO.usuario} /{' '}
-            {CONTA_DEMONSTRACAO.senha}
+            Conta de teste: {CONTA_DEMONSTRACAO.email} / {CONTA_DEMONSTRACAO.senha}
           </Text>
         </View>
       </ScrollView>

@@ -1,106 +1,91 @@
-import { ErroApi, requisitar } from '@/services/api';
+import { requisitar } from '@/services/api';
 
 /**
- * Autenticacao pela API REST do DummyJSON.
+ * Autenticacao pela API do aplicativo (pasta api/ deste repositorio).
  *
- * Diferente do catalogo (GraphQL, uma unica URL), aqui cada recurso tem a sua
- * rota e o verbo HTTP diz a acao: POST /auth/login cria a sessao e devolve um
- * token JWT; GET /auth/me devolve o usuario dono do token, enviado no
- * cabecalho Authorization. A conta de demonstracao e a emilys / emilyspass.
+ * Cada recurso tem a sua rota e o verbo HTTP diz a acao: POST /auth/entrar
+ * abre uma sessao e devolve dois tokens, POST /auth/renovar troca o token
+ * de renovacao por um par novo e POST /auth/sair encerra a sessao no
+ * servidor. A senha so existe durante a chamada de entrar ou cadastrar:
+ * nao e guardada no aparelho.
+ *
+ * Por padrao o aplicativo usa a API publicada. Para usar uma API rodando
+ * na sua maquina, defina EXPO_PUBLIC_API_URL no arquivo .env da raiz, por
+ * exemplo http://192.168.0.10:3000/v1 (o IP do computador na rede local).
  */
-const URL_AUTH = process.env.EXPO_PUBLIC_AUTH_URL ?? 'https://dummyjson.com/auth';
+export const URL_API_APP = process.env.EXPO_PUBLIC_API_URL ?? 'https://animes-api.kogaip.com/v1';
 
-/** Validade pedida para o token: 30 dias, em minutos. */
-const VALIDADE_TOKEN_MIN = 30 * 24 * 60;
-
-export const CONTA_DEMONSTRACAO = { usuario: 'emilys', senha: 'emilyspass' };
+/** Conta criada pela propria API para quem quiser testar sem cadastro. */
+export const CONTA_DEMONSTRACAO = { email: 'demo@exemplo.com', senha: 'demo1234' };
 
 /** Usuario da sessao, guardado no aparelho (sem senha e sem token). */
 export interface Usuario {
-  id: number;
-  usuario: string;
+  id: string;
   nome: string;
-  sobrenome: string;
   email: string;
-  foto: string;
+  /** Data de criacao da conta, em ISO 8601. */
+  criadoEm: string;
 }
 
-/** Dados completos do perfil, buscados com o token. */
-export interface Perfil extends Usuario {
-  idade: number | null;
-  nascimento: string | null;
-  telefone: string | null;
-  cidade: string | null;
-  pais: string | null;
+export interface Tokens {
+  /** JWT de curta duracao, enviado no cabecalho Authorization. */
+  acesso: string;
+  /** Token de longa duracao, usado so para pedir um novo token de acesso. */
+  renovacao: string;
 }
 
-interface RespostaLogin {
-  accessToken: string;
-  id: number;
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  image: string;
+export interface Sessao {
+  usuario: Usuario;
+  tokens: Tokens;
 }
 
-interface RespostaPerfil extends Omit<RespostaLogin, 'accessToken'> {
-  age?: number;
-  birthDate?: string;
-  phone?: string;
-  address?: { city?: string; country?: string };
+interface RespostaSessao {
+  usuario: Usuario;
+  tokenAcesso: string;
+  tokenRenovacao: string;
 }
 
-function paraUsuario(dados: Omit<RespostaLogin, 'accessToken'>): Usuario {
+interface RespostaTokens {
+  tokenAcesso: string;
+  tokenRenovacao: string;
+}
+
+function paraSessao(resposta: RespostaSessao): Sessao {
   return {
-    id: dados.id,
-    usuario: dados.username,
-    nome: dados.firstName,
-    sobrenome: dados.lastName,
-    email: dados.email,
-    foto: dados.image,
+    usuario: resposta.usuario,
+    tokens: { acesso: resposta.tokenAcesso, renovacao: resposta.tokenRenovacao },
   };
 }
 
-/**
- * Envia usuario e senha e devolve o usuario e o token.
- *
- * A senha so existe durante esta chamada: nao e guardada em lugar nenhum.
- */
-export async function entrar(
-  usuario: string,
-  senha: string,
-): Promise<{ usuario: Usuario; token: string }> {
-  try {
-    const dados = await requisitar<RespostaLogin>(`${URL_AUTH}/login`, {
-      method: 'POST',
-      body: JSON.stringify({
-        username: usuario.trim(),
-        password: senha,
-        expiresInMins: VALIDADE_TOKEN_MIN,
-      }),
-    });
-    return { usuario: paraUsuario(dados), token: dados.accessToken };
-  } catch (erro) {
-    // Nesta rota o 400 significa credencial errada, e nao pedido mal formado.
-    if (erro instanceof ErroApi && erro.status === 400) {
-      throw new ErroApi('Usuário ou senha incorretos.', 400);
-    }
-    throw erro;
-  }
-}
-
-/** Busca o perfil do dono do token. Token vencido ou invalido gera erro 401. */
-export async function buscarPerfil(token: string): Promise<Perfil> {
-  const dados = await requisitar<RespostaPerfil>(`${URL_AUTH}/me`, {
-    headers: { Authorization: `Bearer ${token}` },
+function enviarJson<T>(caminho: string, corpo: unknown): Promise<T> {
+  return requisitar<T>(`${URL_API_APP}${caminho}`, {
+    method: 'POST',
+    body: JSON.stringify(corpo),
   });
-  return {
-    ...paraUsuario(dados),
-    idade: dados.age ?? null,
-    nascimento: dados.birthDate ?? null,
-    telefone: dados.phone ?? null,
-    cidade: dados.address?.city ?? null,
-    pais: dados.address?.country ?? null,
-  };
+}
+
+export async function entrar(email: string, senha: string): Promise<Sessao> {
+  return paraSessao(
+    await enviarJson<RespostaSessao>('/auth/entrar', { email: email.trim(), senha }),
+  );
+}
+
+export async function cadastrar(nome: string, email: string, senha: string): Promise<Sessao> {
+  return paraSessao(
+    await enviarJson<RespostaSessao>('/auth/cadastro', {
+      nome: nome.trim(),
+      email: email.trim(),
+      senha,
+    }),
+  );
+}
+
+export async function renovarTokens(renovacao: string): Promise<Tokens> {
+  const resposta = await enviarJson<RespostaTokens>('/auth/renovar', { tokenRenovacao: renovacao });
+  return { acesso: resposta.tokenAcesso, renovacao: resposta.tokenRenovacao };
+}
+
+/** Encerra a sessao no servidor. O token de renovacao deixa de valer na hora. */
+export async function encerrarSessao(renovacao: string): Promise<void> {
+  await enviarJson<void>('/auth/sair', { tokenRenovacao: renovacao });
 }
