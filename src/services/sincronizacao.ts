@@ -85,8 +85,12 @@ function retirar(dono: string, id: string): Promise<void> {
   });
 }
 
+export async function contarPendentes(dono: string): Promise<number> {
+  return (await lerFila(dono)).length;
+}
+
 export async function temPendentes(dono: string): Promise<boolean> {
-  return (await lerFila(dono)).length > 0;
+  return (await contarPendentes(dono)) > 0;
 }
 
 /**

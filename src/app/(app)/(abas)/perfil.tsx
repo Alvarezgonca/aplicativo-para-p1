@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter, type Href } from 'expo-router';
-import { useCallback, useMemo } from 'react';
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -23,6 +23,7 @@ import { useFetch } from '@/hooks/use-fetch';
 import type { Usuario } from '@/services/autenticacao';
 import { comCache, MINUTO } from '@/services/cache';
 import { buscarConta } from '@/services/conta';
+import { contarPendentes } from '@/services/sincronizacao';
 
 type NomeIcone = keyof typeof Ionicons.glyphMap;
 
@@ -59,6 +60,15 @@ function montarDetalhes(conta: Usuario): [string, string][] {
   ];
 }
 
+/** Situacao da fila de sincronizacao em texto curto. */
+function textoSincronizacao(pendentes: number | null): string {
+  if (pendentes === null) return '...';
+  if (pendentes === 0) return 'Tudo salvo na conta';
+  return pendentes === 1
+    ? '1 alteração aguardando internet'
+    : `${pendentes} alterações aguardando internet`;
+}
+
 /** Iniciais do nome para o avatar: "Ana Clara Souza" vira "AS". */
 function iniciaisDe(nome: string): string {
   const partes = nome.trim().split(/\s+/);
@@ -89,6 +99,26 @@ export default function TelaPerfil() {
   );
   const { dados: conta, loading, erro, atualizando, recarregar, atualizar } = useFetch(buscar);
 
+  // Quantas mudancas da lista e do historico ainda nao chegaram ao servidor.
+  // Relido toda vez que a aba ganha foco.
+  const [pendentes, setPendentes] = useState<number | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      if (!usuario) {
+        return;
+      }
+      let ativo = true;
+      contarPendentes(usuario.id).then((total) => {
+        if (ativo) {
+          setPendentes(total);
+        }
+      });
+      return () => {
+        ativo = false;
+      };
+    }, [usuario]),
+  );
+
   const estatisticas = useMemo(() => {
     const minutos = registros.reduce((total, item) => total + item.duracao * item.progresso, 0);
     return [
@@ -107,7 +137,7 @@ export default function TelaPerfil() {
       sair();
       return;
     }
-    Alert.alert('Sair da conta', 'Sua lista e seu histórico continuam salvos neste aparelho.', [
+    Alert.alert('Sair da conta', 'Sua lista e seu histórico continuam salvos na sua conta.', [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Sair', style: 'destructive', onPress: () => sair() },
     ]);
@@ -169,15 +199,17 @@ export default function TelaPerfil() {
               <Text style={styles.link}>Tocar para tentar de novo</Text>
             </Pressable>
           ) : (
-            montarDetalhes(conta).map(([rotulo, valor], indice) => (
-              <View key={rotulo}>
-                {indice > 0 ? <View style={styles.divisoria} /> : null}
-                <View style={styles.linha}>
-                  <Text style={styles.linhaRotulo}>{rotulo}</Text>
-                  <Text style={styles.detalhe}>{valor}</Text>
+            [...montarDetalhes(conta), ['Sincronização', textoSincronizacao(pendentes)]].map(
+              ([rotulo, valor], indice) => (
+                <View key={rotulo}>
+                  {indice > 0 ? <View style={styles.divisoria} /> : null}
+                  <View style={styles.linha}>
+                    <Text style={styles.linhaRotulo}>{rotulo}</Text>
+                    <Text style={styles.detalhe}>{valor}</Text>
+                  </View>
                 </View>
-              </View>
-            ))
+              ),
+            )
           )}
         </View>
 
