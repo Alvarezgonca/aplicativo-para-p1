@@ -40,7 +40,8 @@ const PAGINAS: Pagina[] = [
   {
     icone: 'bookmark-outline',
     titulo: 'Sua lista vai com você',
-    texto: 'Lista, progresso e preferências ficam salvos no aparelho e funcionam até sem internet.',
+    texto:
+      'Lista e progresso ficam salvos na sua conta: entre em outro celular e continue de onde parou.',
   },
 ];
 

@@ -4,7 +4,7 @@ import { Cores } from '@/constants/tema';
 import { useSessao } from '@/contextos/sessao';
 
 /**
- * Grupo das telas de entrada (boas-vindas e login).
+ * Grupo das telas de entrada (boas-vindas, login e cadastro).
  *
  * Os parenteses no nome da pasta fazem dela um grupo: organiza as rotas e
  * permite um layout proprio sem entrar na URL. A tela de login continua
@@ -26,7 +26,8 @@ export default function LayoutEntrada() {
         headerShown: false,
         contentStyle: { backgroundColor: Cores.fundo },
         animation: 'fade',
-      }}
-    />
+      }}>
+      <Stack.Screen name="cadastro" options={{ animation: 'slide_from_right' }} />
+    </Stack>
   );
 }

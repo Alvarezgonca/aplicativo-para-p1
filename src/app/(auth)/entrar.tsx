@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { CampoFormulario } from '@/componentes/campo-formulario';
 import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
 import { useSessao } from '@/contextos/sessao';
 import { mensagemDeErro } from '@/services/api';
@@ -48,7 +49,6 @@ export default function TelaEntrar() {
 
   const [email, setEmail] = useState(ultimoEmail);
   const [senha, setSenha] = useState('');
-  const [senhaVisivel, setSenhaVisivel] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const campoSenha = useRef<ComponentRef<typeof TextInput>>(null);
@@ -100,58 +100,33 @@ export default function TelaEntrar() {
         </Text>
 
         <View style={styles.formulario}>
-          <Text style={styles.rotulo}>E-mail</Text>
-          <View style={styles.campo}>
-            <Ionicons name="mail-outline" size={18} color={Cores.textoTerciario} />
-            <TextInput
-              style={styles.entrada}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="seu@email.com"
-              placeholderTextColor={Cores.textoTerciario}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="email"
-              textContentType="emailAddress"
-              returnKeyType="next"
-              editable={!enviando}
-              onSubmitEditing={() => campoSenha.current?.focus()}
-              accessibilityLabel="E-mail"
-            />
-          </View>
-
-          <Text style={styles.rotulo}>Senha</Text>
-          <View style={styles.campo}>
-            <Ionicons name="lock-closed-outline" size={18} color={Cores.textoTerciario} />
-            <TextInput
-              ref={campoSenha}
-              style={styles.entrada}
-              value={senha}
-              onChangeText={setSenha}
-              placeholder="sua senha"
-              placeholderTextColor={Cores.textoTerciario}
-              secureTextEntry={!senhaVisivel}
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="current-password"
-              textContentType="password"
-              returnKeyType="go"
-              editable={!enviando}
-              onSubmitEditing={() => enviar()}
-              accessibilityLabel="Senha"
-            />
-            <Pressable
-              onPress={() => setSenhaVisivel((atual) => !atual)}
-              hitSlop={8}
-              accessibilityLabel={senhaVisivel ? 'Esconder senha' : 'Mostrar senha'}>
-              <Ionicons
-                name={senhaVisivel ? 'eye-off-outline' : 'eye-outline'}
-                size={20}
-                color={Cores.textoSecundario}
-              />
-            </Pressable>
-          </View>
+          <CampoFormulario
+            rotulo="E-mail"
+            icone="mail-outline"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="seu@email.com"
+            keyboardType="email-address"
+            autoComplete="email"
+            textContentType="emailAddress"
+            returnKeyType="next"
+            editable={!enviando}
+            onSubmitEditing={() => campoSenha.current?.focus()}
+          />
+          <CampoFormulario
+            ref={campoSenha}
+            rotulo="Senha"
+            icone="lock-closed-outline"
+            senha
+            value={senha}
+            onChangeText={setSenha}
+            placeholder="sua senha"
+            autoComplete="current-password"
+            textContentType="password"
+            returnKeyType="go"
+            editable={!enviando}
+            onSubmitEditing={() => enviar()}
+          />
 
           {erro ? (
             <View style={styles.erro}>
@@ -189,6 +164,16 @@ export default function TelaEntrar() {
           <Text style={styles.dica}>
             Conta de teste: {CONTA_DEMONSTRACAO.email} / {CONTA_DEMONSTRACAO.senha}
           </Text>
+
+          <Pressable
+            style={styles.trocar}
+            onPress={() => router.push('/cadastro')}
+            disabled={enviando}
+            accessibilityRole="link">
+            <Text style={styles.textoTrocar}>
+              Ainda não tem conta? <Text style={styles.link}>Criar conta</Text>
+            </Text>
+          </Pressable>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -212,28 +197,6 @@ const styles = StyleSheet.create({
     marginTop: Espacamento.sm,
   },
   formulario: { marginTop: Espacamento.xxl, gap: Espacamento.sm },
-  rotulo: {
-    color: Cores.textoSecundario,
-    fontSize: Fonte.pequena,
-    fontWeight: '600',
-    marginTop: Espacamento.sm,
-  },
-  campo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Espacamento.sm,
-    backgroundColor: Cores.superficie,
-    borderWidth: 1,
-    borderColor: Cores.divisoria,
-    borderRadius: Raio.md,
-    paddingHorizontal: Espacamento.md,
-  },
-  entrada: {
-    flex: 1,
-    color: Cores.texto,
-    fontSize: Fonte.corpo,
-    paddingVertical: Espacamento.md,
-  },
   erro: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -278,4 +241,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: Espacamento.sm,
   },
+  trocar: { alignItems: 'center', paddingVertical: Espacamento.lg },
+  textoTrocar: { color: Cores.textoSecundario, fontSize: Fonte.pequena },
+  link: { color: Cores.marca, fontWeight: '700' },
 });
