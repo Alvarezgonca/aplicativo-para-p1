@@ -1,3 +1,4 @@
+import NetInfo from '@react-native-community/netinfo';
 import {
   createContext,
   useCallback,
@@ -9,6 +10,7 @@ import {
 } from 'react';
 
 import { useSessao } from '@/contextos/sessao';
+import { baixarSincronizado, enfileirar, enviarPendentes } from '@/services/sincronizacao';
 import { storage } from '@/services/storage';
 import type { AnimeResumo } from '@/services/tipos';
 
@@ -34,6 +36,16 @@ const Contexto = createContext<ValorContexto | undefined>(undefined);
  * fim, entao cada conta que entra neste aparelho tem a propria lista.
  */
 const CHAVE = 'minha-lista';
+
+/** Item como a API devolve: o id do anime vem como animeId e a data em ISO. */
+interface ItemDaApi extends Omit<ItemLista, 'id' | 'salvoEm'> {
+  animeId: number;
+  salvoEm: string;
+}
+
+function daApi({ animeId, salvoEm, ...resto }: ItemDaApi): ItemLista {
+  return { ...resto, id: animeId, salvoEm: Date.parse(salvoEm) };
+}
 
 /**
  * Copia so os campos do resumo. A tela de detalhe entrega um AnimeDetalhe,
@@ -72,6 +84,11 @@ function resumir(anime: AnimeResumo): AnimeResumo {
  *
  * A lista pertence ao usuario logado. Quando a sessao muda (entrar, sair ou
  * trocar de conta), a chave muda e a lista do novo dono e lida do disco.
+ *
+ * O aparelho guarda a copia de trabalho e a conta, no servidor, guarda a
+ * copia oficial. Salvar ou remover muda a tela na hora e entra na fila de
+ * sincronizacao (PUT ou DELETE em /lista/:animeId); ao entrar na conta e
+ * quando a conexao volta, a lista do servidor substitui a do aparelho.
  */
 export function ProvedorMinhaLista({ children }: { children: ReactNode }) {
   const { usuario } = useSessao();
@@ -84,26 +101,50 @@ export function ProvedorMinhaLista({ children }: { children: ReactNode }) {
     itens: [],
   });
 
+  const dono = usuario?.id ?? null;
+  // Muda quando a conexao volta, para sincronizar de novo.
+  const [rodada, setRodada] = useState(0);
+
   useEffect(() => {
-    if (!chave) {
+    let estavaOffline = false;
+    return NetInfo.addEventListener((rede) => {
+      const online = rede.isConnected !== false;
+      if (online && estavaOffline) {
+        setRodada((atual) => atual + 1);
+      }
+      estavaOffline = !online;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!chave || !dono) {
       return;
     }
     let ativo = true;
-    storage.get<ItemLista[]>(chave, []).then((lidos) => {
-      if (!ativo) {
-        return;
-      }
-      // O conteudo vem do disco e pode estar num formato antigo.
-      const validos = Array.isArray(lidos)
-        ? lidos.filter((item) => typeof item?.id === 'number')
-        : [];
-      setEstado({ chave, itens: validos });
-    });
+    storage
+      .get<ItemLista[]>(chave, [])
+      .then((lidos) => {
+        if (ativo) {
+          // O conteudo vem do disco e pode estar num formato antigo.
+          const validos = Array.isArray(lidos)
+            ? lidos.filter((item) => typeof item?.id === 'number')
+            : [];
+          setEstado({ chave, itens: validos });
+        }
+        return baixarSincronizado<ItemDaApi[]>(dono, '/lista');
+      })
+      .then((doServidor) => {
+        if (ativo && doServidor) {
+          const itens = doServidor.map(daApi);
+          setEstado({ chave, itens });
+          storage.set(chave, itens);
+        }
+      });
     // Se a sessao mudar antes da leitura terminar, a resposta antiga e ignorada.
     return () => {
       ativo = false;
     };
-  }, [chave]);
+  }, [chave, dono, rodada]);
 
   const carregado = chave === null || estado.chave === chave;
   const itens = useMemo(
@@ -123,24 +164,49 @@ export function ProvedorMinhaLista({ children }: { children: ReactNode }) {
     [chave],
   );
 
+  /** Manda a mudanca para a fila e tenta enviar na hora. */
+  const sincronizar = useCallback(
+    (id: number, item: ItemLista | null) => {
+      if (!dono) {
+        return;
+      }
+      const operacao = item
+        ? {
+            chave: `lista:${id}`,
+            metodo: 'PUT' as const,
+            caminho: `/lista/${id}`,
+            corpo: { ...item, id: undefined },
+          }
+        : { chave: `lista:${id}`, metodo: 'DELETE' as const, caminho: `/lista/${id}` };
+      enfileirar(dono, operacao).then(() => enviarPendentes(dono));
+    },
+    [dono],
+  );
+
   const alternar = useCallback(
     (anime: AnimeResumo) => {
       if (!carregado) {
         return;
       }
       const jaSalvo = itens.some((item) => item.id === anime.id);
-      salvarLista(
-        jaSalvo
-          ? itens.filter((item) => item.id !== anime.id)
-          : [{ ...resumir(anime), salvoEm: Date.now() }, ...itens],
-      );
+      if (jaSalvo) {
+        salvarLista(itens.filter((item) => item.id !== anime.id));
+        sincronizar(anime.id, null);
+        return;
+      }
+      const novo = { ...resumir(anime), salvoEm: Date.now() };
+      salvarLista([novo, ...itens]);
+      sincronizar(anime.id, novo);
     },
-    [itens, carregado, salvarLista],
+    [itens, carregado, salvarLista, sincronizar],
   );
 
   const remover = useCallback(
-    (id: number) => salvarLista(itens.filter((item) => item.id !== id)),
-    [itens, salvarLista],
+    (id: number) => {
+      salvarLista(itens.filter((item) => item.id !== id));
+      sincronizar(id, null);
+    },
+    [itens, salvarLista, sincronizar],
   );
 
   const valor = useMemo<ValorContexto>(
