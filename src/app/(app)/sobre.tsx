@@ -5,6 +5,7 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-n
 
 import { CabecalhoTela } from '@/componentes/cabecalho-tela';
 import { Cores, Espacamento, Fonte, Raio } from '@/constants/tema';
+import { URL_API_APP } from '@/services/autenticacao';
 
 type NomeIcone = keyof typeof Ionicons.glyphMap;
 
@@ -16,10 +17,11 @@ const APIS: { nome: string; tipo: string; uso: string; endereco: string }[] = [
     endereco: 'https://docs.anilist.co',
   },
   {
-    nome: 'DummyJSON',
+    nome: 'API do aplicativo',
     tipo: 'REST + JWT',
-    uso: 'Login, token de acesso e dados do perfil.',
-    endereco: 'https://dummyjson.com/docs/auth',
+    uso: 'Cadastro, login, minha lista e histórico de cada conta, num banco PostgreSQL. Toque para abrir a documentação.',
+    // A documentacao (Swagger) fica na raiz do servidor, fora do /v1.
+    endereco: `${URL_API_APP.replace(/\/v1\/?$/, '')}/docs`,
   },
 ];
 
@@ -37,10 +39,20 @@ const TECNOLOGIAS: { icone: NomeIcone; nome: string; detalhe: string }[] = [
   {
     icone: 'server-outline',
     nome: 'AsyncStorage',
-    detalhe: 'Lista, histórico, preferências e cache',
+    detalhe: 'Cópia local da lista e do histórico, fila offline e cache',
   },
-  { icone: 'lock-closed-outline', nome: 'SecureStore', detalhe: 'Token de acesso criptografado' },
-  { icone: 'wifi-outline', nome: 'NetInfo', detalhe: 'Aviso e recarga ao voltar a conexão' },
+  { icone: 'lock-closed-outline', nome: 'SecureStore', detalhe: 'Tokens guardados criptografados' },
+  {
+    icone: 'wifi-outline',
+    nome: 'NetInfo',
+    detalhe: 'Envia a fila e recarrega ao voltar a conexão',
+  },
+  {
+    icone: 'cloud-outline',
+    nome: 'Node.js + Express',
+    detalhe: 'API própria, com validação e limite de tentativas',
+  },
+  { icone: 'albums-outline', nome: 'PostgreSQL', detalhe: 'Contas, listas e históricos' },
 ];
 
 const AUTORES = ['Daniel Alvarez Gonçalves', 'Clara Moledo'];
@@ -67,8 +79,8 @@ export default function TelaSobre() {
 
         <Text style={styles.texto}>
           Projeto acadêmico da disciplina de Aplicativos Híbridos (Univassouras). Recria a
-          experiência de um aplicativo de streaming de animes com dados reais de APIs públicas. Não
-          tem vínculo com a Crunchyroll e não reproduz vídeos.
+          experiência de um aplicativo de streaming de animes: o catálogo vem do AniList e as contas
+          ficam numa API própria. Não tem vínculo com a Crunchyroll e não reproduz vídeos.
         </Text>
 
         <Text style={styles.tituloGrupo}>APIs consumidas</Text>
