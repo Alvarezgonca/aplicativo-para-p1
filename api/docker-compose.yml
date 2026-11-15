@@ -1,0 +1,50 @@
+# Sobe a API e o banco na sua maquina:
+#
+#   cp .env.example .env
+#   docker compose up -d
+#
+# A API fica em http://localhost:3000 (documentacao em /docs). O banco nao
+# tem porta publicada: so a API alcanca, pela rede interna do compose.
+
+name: animes
+
+services:
+  banco:
+    image: postgres:17.12-alpine
+    environment:
+      POSTGRES_DB: animes
+      POSTGRES_USER: animes
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no arquivo .env}
+    volumes:
+      - dados-banco:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U animes -d animes']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build: .
+    depends_on:
+      banco:
+        condition: service_healthy
+    environment:
+      DB_HOST: banco
+      DB_PORT: 5432
+      DB_NAME: animes
+      DB_USER: animes
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no arquivo .env}
+      CORS_ORIGENS: ${CORS_ORIGENS:-http://localhost:8081}
+    ports:
+      - '3000:3000'
+    # Sistema de arquivos so de leitura: a API nao grava nada em disco, e um
+    # invasor nao consegue deixar arquivo dentro do conteiner.
+    read_only: true
+    tmpfs:
+      - /tmp
+    restart: unless-stopped
+
+volumes:
+  dados-banco:

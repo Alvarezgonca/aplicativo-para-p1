@@ -7,6 +7,11 @@
  * tambem fica de fora pelo mesmo motivo.
  */
 function registrarRequisicoes(req, res, next) {
+  // A verificacao de saude do Docker roda a cada 30 segundos e so encheria o log.
+  if (req.path === '/saude') {
+    next();
+    return;
+  }
   const inicio = process.hrtime.bigint();
   res.on('finish', () => {
     const ms = Number(process.hrtime.bigint() - inicio) / 1e6;
