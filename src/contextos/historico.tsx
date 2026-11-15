@@ -1,3 +1,4 @@
+import NetInfo from '@react-native-community/netinfo';
 import {
   createContext,
   useCallback,
@@ -9,6 +10,7 @@ import {
 } from 'react';
 
 import { useSessao } from '@/contextos/sessao';
+import { baixarSincronizado, enfileirar, enviarPendentes } from '@/services/sincronizacao';
 import { storage } from '@/services/storage';
 
 /** Um episodio assistido (inteiro ou em parte). */
@@ -36,6 +38,15 @@ const LIMITE = 200;
 
 const CHAVE = 'historico';
 
+/** Registro como a API devolve: a data vem em texto ISO. */
+interface RegistroDaApi extends Omit<RegistroHistorico, 'assistidoEm'> {
+  assistidoEm: string;
+}
+
+function daApi(registro: RegistroDaApi): RegistroHistorico {
+  return { ...registro, assistidoEm: Date.parse(registro.assistidoEm) };
+}
+
 interface ValorContexto {
   /** Registros do mais recente para o mais antigo. */
   registros: RegistroHistorico[];
@@ -49,13 +60,17 @@ interface ValorContexto {
 const Contexto = createContext<ValorContexto | undefined>(undefined);
 
 /**
- * Historico de reproducao, guardado no aparelho.
+ * Historico de reproducao, guardado no aparelho e na conta.
  *
  * O player chama registrar enquanto o episodio toca; a tela inicial usa os
  * registros para a fileira "Continuar assistindo", o detalhe para as barras de
  * progresso dos episodios e o perfil para as estatisticas.
  *
  * Como a lista, o historico e de cada usuario: a chave leva o id da conta.
+ * A copia do aparelho abre na hora e funciona sem internet; cada mudanca
+ * entra na fila de sincronizacao e vai para a API. Ao entrar na conta e
+ * quando a conexao volta, a versao do servidor substitui a local, entao o
+ * progresso feito em outro celular aparece aqui.
  */
 export function ProvedorHistorico({ children }: { children: ReactNode }) {
   const { usuario } = useSessao();
@@ -65,20 +80,46 @@ export function ProvedorHistorico({ children }: { children: ReactNode }) {
     registros: RegistroHistorico[];
   }>({ chave: null, registros: [] });
 
+  const dono = usuario?.id ?? null;
+  // Muda quando a conexao volta, para sincronizar de novo.
+  const [rodada, setRodada] = useState(0);
+
   useEffect(() => {
-    if (!chave) {
+    let estavaOffline = false;
+    return NetInfo.addEventListener((rede) => {
+      const online = rede.isConnected !== false;
+      if (online && estavaOffline) {
+        setRodada((atual) => atual + 1);
+      }
+      estavaOffline = !online;
+    });
+  }, []);
+
+  // Primeiro a copia local (instantanea), depois a do servidor.
+  useEffect(() => {
+    if (!chave || !dono) {
       return;
     }
     let ativo = true;
-    storage.get<RegistroHistorico[]>(chave, []).then((lidos) => {
-      if (ativo) {
-        setEstado({ chave, registros: Array.isArray(lidos) ? lidos : [] });
-      }
-    });
+    storage
+      .get<RegistroHistorico[]>(chave, [])
+      .then((lidos) => {
+        if (ativo) {
+          setEstado({ chave, registros: Array.isArray(lidos) ? lidos : [] });
+        }
+        return baixarSincronizado<RegistroDaApi[]>(dono, '/historico');
+      })
+      .then((doServidor) => {
+        if (ativo && doServidor) {
+          const registros = doServidor.map(daApi);
+          setEstado({ chave, registros });
+          storage.set(chave, registros);
+        }
+      });
     return () => {
       ativo = false;
     };
-  }, [chave]);
+  }, [chave, dono, rodada]);
 
   const carregado = chave === null || estado.chave === chave;
   const registros = useMemo(
@@ -93,10 +134,11 @@ export function ProvedorHistorico({ children }: { children: ReactNode }) {
    * armazenamento a todo instante deixaria o aplicativo lento.
    */
   const registrar = useCallback(
-    (novo: Omit<RegistroHistorico, 'assistidoEm'>) => {
-      if (!chave) {
+    (dados: Omit<RegistroHistorico, 'assistidoEm'>) => {
+      if (!chave || !dono) {
         return;
       }
+      const novo: RegistroHistorico = { ...dados, assistidoEm: Date.now() };
       setEstado((atual) => {
         // Gravacao que chega depois de trocar de conta nao entra no historico novo.
         if (atual.chave !== chave) {
@@ -105,21 +147,35 @@ export function ProvedorHistorico({ children }: { children: ReactNode }) {
         const outros = atual.registros.filter(
           (item) => !(item.animeId === novo.animeId && item.episodio === novo.episodio),
         );
-        const atualizados = [{ ...novo, assistidoEm: Date.now() }, ...outros].slice(0, LIMITE);
+        const atualizados = [novo, ...outros].slice(0, LIMITE);
         storage.set(chave, atualizados);
         return { chave, registros: atualizados };
       });
+
+      const { animeId, episodio, ...corpo } = novo;
+      enfileirar(dono, {
+        chave: `historico:${animeId}:${episodio}`,
+        metodo: 'PUT',
+        caminho: `/historico/${animeId}/${episodio}`,
+        corpo,
+      }).then(() => enviarPendentes(dono));
     },
-    [chave],
+    [chave, dono],
   );
 
   const limpar = useCallback(() => {
-    if (!chave) {
+    if (!chave || !dono) {
       return;
     }
     setEstado({ chave, registros: [] });
     storage.remove(chave);
-  }, [chave]);
+    // Limpar torna inuteis os progressos que ainda nao tinham subido.
+    enfileirar(
+      dono,
+      { chave: 'historico:limpar', metodo: 'DELETE', caminho: '/historico' },
+      (pendente) => pendente.chave.startsWith('historico:'),
+    ).then(() => enviarPendentes(dono));
+  }, [chave, dono]);
 
   const valor = useMemo<ValorContexto>(
     () => ({
