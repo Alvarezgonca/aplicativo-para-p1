@@ -18,6 +18,7 @@ import {
   type Usuario,
 } from '@/services/autenticacao';
 import { limparCache } from '@/services/cache';
+import { excluirConta as excluirContaNaApi } from '@/services/conta';
 import { seguro } from '@/services/seguro';
 import { storage } from '@/services/storage';
 
@@ -37,6 +38,8 @@ interface ValorSessao {
   entrar: (email: string, senha: string) => Promise<void>;
   cadastrar: (nome: string, email: string, senha: string) => Promise<void>;
   sair: () => Promise<void>;
+  /** Exclui a conta no servidor e apaga os dados dela do aparelho. */
+  excluirConta: (senha: string) => Promise<void>;
   concluirBoasVindas: () => Promise<void>;
 }
 
@@ -165,14 +168,32 @@ export function ProvedorSessao({ children }: { children: ReactNode }) {
     setEstado((atual) => ({ ...atual, usuario: null }));
   }, []);
 
+  const excluirConta = useCallback(
+    async (senha: string) => {
+      const id = estado.usuario?.id;
+      await excluirContaNaApi(senha);
+      // A conta nao existe mais: a lista, o historico e a fila dela tambem
+      // saem do aparelho, e o ultimo e-mail deixa de vir preenchido.
+      if (id) {
+        await Promise.all(
+          ['minha-lista', 'historico', 'fila'].map((inicio) => storage.remove(`${inicio}:${id}`)),
+        );
+      }
+      await storage.remove(CHAVE_ULTIMO_EMAIL);
+      await apagarSessaoLocal();
+      setEstado((atual) => ({ ...atual, usuario: null, ultimoEmail: '' }));
+    },
+    [estado.usuario?.id],
+  );
+
   const concluirBoasVindas = useCallback(async () => {
     await storage.set(CHAVE_BOAS_VINDAS, true);
     setEstado((atual) => ({ ...atual, boasVindasVista: true }));
   }, []);
 
   const valor = useMemo<ValorSessao>(
-    () => ({ ...estado, entrar, cadastrar, sair, concluirBoasVindas }),
-    [estado, entrar, cadastrar, sair, concluirBoasVindas],
+    () => ({ ...estado, entrar, cadastrar, sair, excluirConta, concluirBoasVindas }),
+    [estado, entrar, cadastrar, sair, excluirConta, concluirBoasVindas],
   );
 
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
