@@ -3,6 +3,7 @@
 const { Router } = require('express');
 
 const rotasAuth = require('./auth.routes');
+const rotasUsuarios = require('./usuarios.routes');
 
 /**
  * Rotas da versao 1 da API. O prefixo /v1 permite lancar uma versao nova
@@ -11,5 +12,6 @@ const rotasAuth = require('./auth.routes');
 const v1 = Router();
 
 v1.use('/auth', rotasAuth);
+v1.use('/usuarios', rotasUsuarios);
 
 module.exports = v1;
