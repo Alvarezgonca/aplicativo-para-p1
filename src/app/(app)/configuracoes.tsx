@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
@@ -29,11 +30,12 @@ const IDIOMAS: { valor: IdiomaTitulo; rotulo: string; exemplo: string }[] = [
 const NOMES: Record<string, string> = {
   'minha-lista': 'Minha lista',
   historico: 'Histórico',
-  sessao: 'Sessão (perfil)',
+  sessao: 'Sessão (usuário)',
+  fila: 'Fila de sincronização',
   preferencias: 'Preferências',
   'buscas-recentes': 'Buscas recentes',
   'boas-vindas-vista': 'Apresentação vista',
-  'ultimo-usuario': 'Último usuário',
+  'ultimo-email': 'Último e-mail',
 };
 
 function formatarBytes(bytes: number): string {
@@ -92,13 +94,14 @@ function LinhaInterruptor(props: {
 }
 
 /**
- * Configuracoes do aparelho.
+ * Configuracoes do aparelho e da conta.
  *
  * As chaves de cima sao as preferencias (gravadas pelo usePersistedState).
  * A secao Armazenamento le o proprio AsyncStorage e mostra o que o
  * aplicativo guarda e quanto ocupa, com opcoes para liberar espaco.
  */
 export default function TelaConfiguracoes() {
+  const router = useRouter();
   const { preferencias, alterar } = usePreferencias();
   const { limpar: limparHistorico, registros } = useHistorico();
   const [aviso, setAviso] = useState<string | null>(null);
@@ -197,7 +200,7 @@ export default function TelaConfiguracoes() {
               ))}
               <View style={styles.linhaArmazenamento}>
                 <View style={styles.textos}>
-                  <Text style={styles.tituloLinha}>Token de acesso</Text>
+                  <Text style={styles.tituloLinha}>Tokens de acesso e renovação</Text>
                   <Text style={styles.chave}>
                     {Platform.OS === 'web'
                       ? 'localStorage (navegador)'
@@ -239,6 +242,21 @@ export default function TelaConfiguracoes() {
           <Ionicons name="time-outline" size={18} color={Cores.erro} />
           <Text style={[styles.textoBotao, styles.textoPerigo]}>Limpar histórico</Text>
         </Pressable>
+
+        <Text style={styles.tituloGrupo}>Conta</Text>
+        <View style={styles.grupo}>
+          <Pressable
+            style={({ pressed }) => [styles.linha, pressed && styles.linhaPressionada]}
+            onPress={() => router.push('/excluir-conta')}
+            accessibilityRole="button">
+            <Ionicons name="person-remove-outline" size={20} color={Cores.erro} />
+            <View style={styles.textos}>
+              <Text style={[styles.tituloLinha, styles.textoPerigo]}>Excluir minha conta</Text>
+              <Text style={styles.descricao}>Apaga a conta e os dados dela do servidor.</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={Cores.textoTerciario} />
+          </Pressable>
+        </View>
       </ScrollView>
     </View>
   );
@@ -330,4 +348,5 @@ const styles = StyleSheet.create({
   pressionado: { opacity: 0.7 },
   textoBotao: { color: Cores.texto, fontSize: Fonte.corpo, fontWeight: '700' },
   textoPerigo: { color: Cores.erro },
+  linhaPressionada: { backgroundColor: Cores.superficieAlta },
 });
