@@ -5,6 +5,7 @@ const express = require('express');
 const helmet = require('helmet');
 
 const { naoEncontrado, tratarErros } = require('./middlewares/erros');
+const { limiteGeral } = require('./middlewares/limites');
 const { registrarRequisicoes } = require('./middlewares/registro');
 const rotasV1 = require('./routes');
 const rotasSaude = require('./routes/saude.routes');
@@ -35,7 +36,7 @@ function criarApp(config) {
   }
 
   app.use('/saude', rotasSaude);
-  app.use('/v1', rotasV1);
+  app.use('/v1', limiteGeral, rotasV1);
 
   app.use(naoEncontrado);
   app.use(tratarErros);
