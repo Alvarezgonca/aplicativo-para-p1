@@ -2,6 +2,8 @@
 
 const { rateLimit } = require('express-rate-limit');
 
+const { config } = require('../config/ambiente');
+
 const MINUTO = 60 * 1000;
 
 function responderLimite(mensagem) {
@@ -17,7 +19,7 @@ function responderLimite(mensagem) {
  */
 const limiteGeral = rateLimit({
   windowMs: 15 * MINUTO,
-  limit: 900,
+  limit: config.limites.geral,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
   handler: responderLimite('Muitas requisições seguidas. Aguarde alguns minutos.'),
@@ -30,7 +32,7 @@ const limiteGeral = rateLimit({
  */
 const limiteLogin = rateLimit({
   windowMs: 15 * MINUTO,
-  limit: 10,
+  limit: config.limites.login,
   skipSuccessfulRequests: true,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
@@ -40,7 +42,7 @@ const limiteLogin = rateLimit({
 /** Cadastro: evita a criacao de contas em massa a partir de um mesmo IP. */
 const limiteCadastro = rateLimit({
   windowMs: 60 * MINUTO,
-  limit: 10,
+  limit: config.limites.cadastro,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
   handler: responderLimite('Muitos cadastros a partir desta rede. Tente de novo mais tarde.'),

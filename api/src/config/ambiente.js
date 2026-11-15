@@ -79,6 +79,13 @@ const config = {
     custoBcrypt: lerInteiro('BCRYPT_CUSTO', 12),
   },
 
+  /** Maximo de requisicoes por IP em cada janela (ver middlewares/limites.js). */
+  limites: {
+    geral: lerInteiro('LIMITE_GERAL', 900),
+    login: lerInteiro('LIMITE_LOGIN', 10),
+    cadastro: lerInteiro('LIMITE_CADASTRO', 10),
+  },
+
   /**
    * Conta de demonstracao, para o professor e quem baixar o projeto
    * entrarem sem cadastro. E publica de proposito (o botao do aplicativo
