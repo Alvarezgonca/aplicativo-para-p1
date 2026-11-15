@@ -204,10 +204,12 @@ const CONSULTA_GENEROS = `query { GenreCollection }`;
 async function consultar<T>(consulta: string, variaveis: Record<string, unknown> = {}): Promise<T> {
   const documento = consulta.includes('...Resumo') ? consulta + FRAGMENTO_RESUMO : consulta;
 
-  const resposta = await requisitar<RespostaGraphQL<T>>(URL_API, {
-    method: 'POST',
-    body: JSON.stringify({ query: documento, variables: variaveis }),
-  });
+  // As consultas so leem dados, entao podem ser repetidas em falha de rede.
+  const resposta = await requisitar<RespostaGraphQL<T>>(
+    URL_API,
+    { method: 'POST', body: JSON.stringify({ query: documento, variables: variaveis }) },
+    { idempotente: true },
+  );
 
   // No GraphQL o status HTTP pode ser 200 e ainda assim trazer erros.
   if (resposta.errors?.length || !resposta.data) {
