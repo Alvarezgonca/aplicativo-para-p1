@@ -4,11 +4,13 @@ const { criarApp } = require('./app');
 const { config } = require('./config/ambiente');
 const { sequelize } = require('./database/conexao');
 const { criarMigrador } = require('./database/migrador');
+const { garantirContaDemonstracao } = require('./database/semear');
 
 /**
- * Sobe a API em ordem: confere o banco, aplica as migracoes pendentes e so
- * entao abre a porta. Se o banco nao responder, o processo sai com erro e o
- * Docker tenta de novo, em vez de aceitar requisicoes que falhariam.
+ * Sobe a API em ordem: confere o banco, aplica as migracoes pendentes,
+ * garante a conta de demonstracao e so entao abre a porta. Se o banco nao
+ * responder, o processo sai com erro e o Docker tenta de novo, em vez de
+ * aceitar requisicoes que falhariam.
  */
 async function iniciar() {
   await sequelize.authenticate();
@@ -16,6 +18,7 @@ async function iniciar() {
   if (aplicadas.length) {
     console.log(`Migracoes aplicadas: ${aplicadas.map((m) => m.name).join(', ')}`);
   }
+  await garantirContaDemonstracao();
 
   const app = criarApp(config);
   const servidor = app.listen(config.porta, () => {

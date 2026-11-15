@@ -78,6 +78,17 @@ const config = {
     // Custo do bcrypt: cada +1 dobra o tempo para testar uma senha.
     custoBcrypt: lerInteiro('BCRYPT_CUSTO', 12),
   },
+
+  /**
+   * Conta de demonstracao, para o professor e quem baixar o projeto
+   * entrarem sem cadastro. E publica de proposito (o botao do aplicativo
+   * preenche estes dados) e por isso nao pode ser excluida pela API.
+   */
+  demonstracao: {
+    nome: 'Conta de demonstração',
+    email: ler('DEMO_EMAIL', 'demo@exemplo.com'),
+    senha: ler('DEMO_SENHA', 'demo1234'),
+  },
 };
 
 if (config.autenticacao.segredoJwt.length < 32) {
