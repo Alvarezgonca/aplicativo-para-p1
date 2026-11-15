@@ -3,7 +3,9 @@
 const cors = require('cors');
 const express = require('express');
 const helmet = require('helmet');
+const swaggerUi = require('swagger-ui-express');
 
+const { documento } = require('./docs/openapi');
 const { naoEncontrado, tratarErros } = require('./middlewares/erros');
 const { limiteGeral } = require('./middlewares/limites');
 const { registrarRequisicoes } = require('./middlewares/registro');
@@ -24,7 +26,17 @@ function criarApp(config) {
 
   // Cabecalhos de seguranca (nosniff, HSTS, bloqueio de iframe e outros) e
   // remocao do X-Powered-By, que contaria que o servidor e Express.
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          // Fora de producao a API roda em http://localhost; pedir https para
+          // os arquivos da pagina de documentacao a deixaria em branco.
+          upgradeInsecureRequests: config.producao ? [] : null,
+        },
+      },
+    }),
+  );
   app.use(cors({ origin: config.origensPermitidas }));
 
   // Corpo limitado: nenhuma rota recebe mais que alguns quilobytes, e um
@@ -36,6 +48,11 @@ function criarApp(config) {
   }
 
   app.use('/saude', rotasSaude);
+  app.use(
+    '/docs',
+    swaggerUi.serve,
+    swaggerUi.setup(documento, { customSiteTitle: 'API de animes' }),
+  );
   app.use('/v1', limiteGeral, rotasV1);
 
   app.use(naoEncontrado);
