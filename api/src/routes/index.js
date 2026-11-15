@@ -3,6 +3,7 @@
 const { Router } = require('express');
 
 const rotasAuth = require('./auth.routes');
+const rotasHistorico = require('./historico.routes');
 const rotasLista = require('./lista.routes');
 const rotasUsuarios = require('./usuarios.routes');
 
@@ -15,5 +16,6 @@ const v1 = Router();
 v1.use('/auth', rotasAuth);
 v1.use('/usuarios', rotasUsuarios);
 v1.use('/lista', rotasLista);
+v1.use('/historico', rotasHistorico);
 
 module.exports = v1;

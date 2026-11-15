@@ -10,7 +10,7 @@ const imagem = Joi.string()
   .uri({ scheme: ['https'] })
   .max(600);
 
-/** Momento em milissegundos, como o Date.now() do aplicativo. */
-const momento = Joi.number().integer().min(0).max(8_640_000_000_000);
+/** Momento em milissegundos, como o Date.now() do aplicativo (ate o ano 2100). */
+const momento = Joi.number().integer().min(0).max(4_102_444_800_000);
 
 module.exports = { animeId, imagem, momento };
