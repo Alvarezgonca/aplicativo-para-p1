@@ -68,6 +68,20 @@ const config = {
     // Sem valor padrao: a senha do banco precisa ser informada sempre.
     senha: ler('DB_PASSWORD'),
   },
+
+  autenticacao: {
+    // Chave que assina os tokens de acesso. Quem tiver esta chave consegue
+    // criar tokens validos, entao ela vem de segredo e nunca do codigo.
+    segredoJwt: ler('JWT_SECRET'),
+    validadeAcesso: ler('JWT_VALIDADE', '15m'),
+    diasRenovacao: lerInteiro('SESSAO_DIAS', 30),
+    // Custo do bcrypt: cada +1 dobra o tempo para testar uma senha.
+    custoBcrypt: lerInteiro('BCRYPT_CUSTO', 12),
+  },
 };
+
+if (config.autenticacao.segredoJwt.length < 32) {
+  throw new Error('JWT_SECRET precisa ter pelo menos 32 caracteres.');
+}
 
 module.exports = { config, ler, lerInteiro };
