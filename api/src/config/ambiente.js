@@ -59,6 +59,15 @@ const config = {
     .split(',')
     .map((origem) => origem.trim())
     .filter(Boolean),
+
+  banco: {
+    host: ler('DB_HOST', 'localhost'),
+    porta: lerInteiro('DB_PORT', 5432),
+    nome: ler('DB_NAME', 'animes'),
+    usuario: ler('DB_USER', 'animes'),
+    // Sem valor padrao: a senha do banco precisa ser informada sempre.
+    senha: ler('DB_PASSWORD'),
+  },
 };
 
 module.exports = { config, ler, lerInteiro };
